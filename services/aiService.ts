@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // 1. THE BLUEPRINT
 export interface Question {
-  id: string; // Changed to string to fix your card errors
+  id: string; 
   type: 'MCQ' | 'Structural';
   question: string;
   options?: string[];       
@@ -16,30 +16,36 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 /**
  * GENERATE QUESTIONS VIA TEXT PROMPT (Quick AI Tab)
- * Uses your specific prompt.
  */
 export const fetchQuestionsFromAI = async (
   topic: string, 
   count: number, 
   difficulty: string,
-  type: 'MCQ' | 'Structural'
+  type: 'MCQ' | 'Structural',
+  className: string // Added class parameter
 ): Promise<Question[]> => {
-  // Use 1.5-flash to avoid the 400 error (2.5 doesn't exist)
+  
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
-    Generate ${count} ${type} exam questions about "${topic}" at a ${difficulty} level.
-    1. Do NOT include numbers like "1." or "Question 1" in the question text.
-    2. For MCQs: provide 4 options starting with A), B), C), D).
-    3. For Structural: provide 2-3 sub-parts in a "subQuestions" array.
-    
+    Generate ${count} ${type} exam questions for a ${className} class.
+    Topic: ${topic}
+    Difficulty: ${difficulty}
+
+    REQUIREMENTS:
+    1. Do NOT include question numbers (like "1." or "Question 1") in the text.
+    2. For MCQ: Provide 4 distinct options in an array.
+    3. For Structural: Provide 2-3 sub-questions in an array.
+    4. Ensure the content is strictly relevant to the topic and grade level.
+
     Return ONLY a raw JSON array:
     [
       {
-        "id": "string",
+        "id": "unique_string",
         "type": "${type}",
         "question": "string",
-        ${type === 'MCQ' ? '"options": ["A)...", "B)...", "C)...", "D)..."]' : '"subQuestions": ["i...", "ii..."]'}
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "subQuestions": ["Sub-part i", "Sub-part ii"]
       }
     ]
   `;
@@ -47,13 +53,17 @@ export const fetchQuestionsFromAI = async (
   try {
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
     
-    // The "q: any" fix prevents the ts(7006) error
+    // Simple cleaning of the AI response
+    const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const data = JSON.parse(cleanJson);
+    
+    // Map data to ensure compatibility with your Question Cards
     return data.map((q: any) => ({
       ...q,
-      id: String(q.id || Math.random()) // Ensures id is always a string for your cards
+      id: String(q.id || Math.random().toString(36).substring(2, 9)),
+      options: Array.isArray(q.options) ? q.options : [],
+      subQuestions: Array.isArray(q.subQuestions) ? q.subQuestions : []
     }));
   } catch (error) {
     console.error("AI Generation Error:", error);

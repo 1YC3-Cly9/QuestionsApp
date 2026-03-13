@@ -3,69 +3,75 @@ import { StyleSheet } from 'react-native';
 export const cardStyles = StyleSheet.create({
   card: { 
     backgroundColor: '#fff', 
-    padding: 15, 
+    padding: 16, 
     borderRadius: 12, 
-    marginBottom: 15, 
+    marginBottom: 16, 
     borderLeftWidth: 5, 
+    borderLeftColor: '#f39c12',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    alignSelf: 'stretch',
   },
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    marginBottom: 10 
+    marginBottom: 12 
   },
   qType: { 
-    fontSize: 10, 
+    fontSize: 11, 
     fontWeight: 'bold', 
     color: '#f39c12', 
     textTransform: 'uppercase' 
   },
   label: { 
-    fontSize: 9, 
+    fontSize: 10, 
     color: '#aaa', 
-    marginBottom: 5, 
-    fontWeight: 'bold',
-    marginTop: 10
+    marginBottom: 4, 
+    marginTop: 10, 
+    fontWeight: 'bold' 
   },
-  
-  // View Mode
-  mathWrapper: { 
-    marginBottom: 10,
-    minHeight: 40 
+  viewContainer: {
+    width: '100%',
   },
-  subContainer: { 
-    marginTop: 5, 
-    paddingLeft: 5 
+  mainQuestionText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    lineHeight: 22,
+    fontWeight: '600',
+    marginBottom: 10
+  },
+  subListContainer: {
+    marginTop: 5,
   },
   subRow: { 
     flexDirection: 'row', 
-    marginBottom: 12, 
+    marginBottom: 8, 
+    width: '100%',
     alignItems: 'flex-start' 
   },
   subRoman: { 
     fontWeight: 'bold', 
     color: '#34495e', 
-    marginRight: 10, 
-    width: 30, 
-    fontSize: 14,
-    textAlign: 'right'
+    width: 35, 
+    fontSize: 14 
   },
-  subMathWrapper: { 
-    flex: 1,
-    minHeight: 35
+  textWrapper: { 
+    flex: 1, // Forces the text to wrap instead of pushing the UI
   },
-
-  // Edit Mode
+  subQuestionText: {
+    fontSize: 15,
+    color: '#34495e',
+    lineHeight: 20
+  },
   input: { 
     borderBottomWidth: 1, 
-    borderBottomColor: '#ddd', 
+    borderBottomColor: '#eee', 
     marginBottom: 15, 
     fontSize: 16, 
-    padding: 5, 
+    paddingVertical: 5, 
     color: '#2c3e50' 
   },
   editRow: { 
@@ -74,7 +80,7 @@ export const cardStyles = StyleSheet.create({
     marginBottom: 10 
   },
   romanLabel: { 
-    width: 30, 
+    width: 25, 
     fontWeight: 'bold', 
     color: '#f39c12' 
   },
@@ -83,18 +89,16 @@ export const cardStyles = StyleSheet.create({
     borderBottomWidth: 1, 
     borderBottomColor: '#eee', 
     marginRight: 10, 
-    padding: 5 
+    paddingVertical: 4 
   },
   addBtn: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    marginTop: 15,
-    padding: 5
+    marginTop: 10 
   },
   addText: { 
     color: '#27ae60', 
     marginLeft: 8, 
-    fontWeight: 'bold', 
-    fontSize: 13 
+    fontWeight: 'bold' 
   }
 });
