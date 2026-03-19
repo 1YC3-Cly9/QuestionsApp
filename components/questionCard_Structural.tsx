@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { cardStyles as styles } from '../styles/cardStyles';
 
 interface Question {
   id: string;
   question: string;
-  subQuestions?: string[];
+  subQuestions?: any[]; // Changed to any[] temporarily to handle potential object data
 }
 
 interface StructuralProps {
@@ -19,7 +19,18 @@ interface StructuralProps {
 export default function QuestionCard_Structural({ item, displayIndex, onDelete, onUpdate }: StructuralProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(item.question);
-  const [editedSubs, setEditedSubs] = useState(item.subQuestions || []);
+  
+  // Normalize subQuestions to strings immediately for the editor
+  const [editedSubs, setEditedSubs] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (item.subQuestions) {
+      const normalized = item.subQuestions.map(sub => 
+        typeof sub === 'object' && sub !== null ? (sub.question || JSON.stringify(sub)) : String(sub)
+      );
+      setEditedSubs(normalized);
+    }
+  }, [item.subQuestions]);
 
   const handleSave = () => {
     onUpdate({ ...item, question: editedText, subQuestions: editedSubs });
@@ -86,7 +97,10 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
                 <View key={i} style={styles.subRow}>
                   <Text style={styles.subRoman}>({romanNumerals[i] || i + 1})</Text>
                   <View style={styles.textWrapper}>
-                    <Text style={styles.subQuestionText}>{sub}</Text>
+                    <Text style={styles.subQuestionText}>
+                      {/* FIX: Check if sub is an object before rendering to prevent React crash */}
+                      {typeof sub === 'object' && sub !== null ? sub.question : sub}
+                    </Text>
                   </View>
                 </View>
               ))}

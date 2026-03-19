@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Question } from "./aiService";
 
-const API_KEY = "YAIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; // Ensure your key is here
+const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; // Ensure your key is here
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const extractAllQuestionsFromImage = async (base64Image: string): Promise<Question[]> => {
@@ -10,11 +10,6 @@ export const extractAllQuestionsFromImage = async (base64Image: string): Promise
   
   const prompt = `
     Extract ALL questions from the provided image for an exam maker app.
-    
-    MATH RULES:
-    - Use LaTeX for ALL math symbols, formulas, and equations.
-    - Wrap LaTeX in single $ symbols.
-    - IMPORTANT: Use DOUBLE BACKSLASHES for LaTeX commands (e.g., \\\\frac{a}{b}).
     
     STRUCTURE RULES:
     - 'MCQ': Must have an 'options' array.
