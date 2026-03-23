@@ -1,22 +1,23 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Question } from "./aiService";
 
-const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; // Ensure your key is here
+const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; // Best to use .env
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const extractAllQuestionsFromImage = async (base64Image: string): Promise<Question[]> => {
-  // Use 1.5-flash for speed and vision accuracy
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   
   const prompt = `
-    Extract ALL questions from the provided image for an exam maker app.
-    
+    PROMPT INSTRUCTION:
+      Extract questions from the image. 
+      Identify all mathematical symbols, equations, and formulas. 
+      Wrap these parts ONLY in single dollar signs. 
+      Example: "A particle travels with an acceleration of $(9 - 4v^2)ms^{-2}$."
+      Return as JSON.
+
     STRUCTURE RULES:
-    - 'MCQ': Must have an 'options' array.
-    - 'Structural': Questions with parts (i, ii) go into 'subQuestions' array.
-    
-    Return ONLY a raw JSON array:
-    [{"type": "MCQ" | "Structural", "question": "...", "options": [], "subQuestions": []}]
+    - Return ONLY a raw JSON array.
+    - 'subQuestions' must be an array of simple strings.
   `;
 
   try {
@@ -32,9 +33,11 @@ export const extractAllQuestionsFromImage = async (base64Image: string): Promise
     return parsed.map(q => ({
       ...q,
       id: Math.random().toString(36).substring(2, 9) + Date.now().toString(),
-      options: Array.isArray(q.options) ? q.options : [],
-      subQuestions: Array.isArray(q.subQuestions) ? q.subQuestions : [],
-      type: q.options?.length > 0 ? 'MCQ' : 'Structural'
+      // Force subQuestions to be strings immediately to prevent the Object crash
+      subQuestions: Array.isArray(q.subQuestions) 
+        ? q.subQuestions.map((s: any) => typeof s === 'object' ? (s.question || JSON.stringify(s)) : String(s))
+        : [],
+      type: (q.options?.length > 0) ? 'MCQ' : 'Structural'
     }));
   } catch (error) {
     console.error("Scanner Service Error:", error);
