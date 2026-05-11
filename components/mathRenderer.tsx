@@ -1,85 +1,61 @@
 // components/mathRenderer.tsx
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-export const MathRenderer = ({ content }: { content: string }) => {
-  // FIX: If content is missing, return nothing or a placeholder
-  if (!content) {
-    return <Text style={styles.plainText}>...</Text>;
-  }
+interface MathRendererProps {
+  content: any; // Flexible type to prevent crashing on unexpected data
+}
 
-  // Regex to find math wrapped in $...$ or [MATH]...[/MATH]
-  const parts = content.split(/(\$.*?\$|\[MATH\].*?\[\/MATH\])/g);
+export const MathRenderer: React.FC<MathRendererProps> = React.memo(({ content }) => {
+  const [height, setHeight] = useState(60);
+  const [loading, setLoading] = useState(true);
+
+  // Safety: Force content to be a string
+  const displayContent = useMemo(() => {
+    if (!content) return "";
+    return String(content).replace(/\$(.*?)\$/g, '\\($1\\)');
+  }, [content]);
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <style>
+        body { font-family: sans-serif; font-size: 16px; margin: 0; padding: 10px; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { border: 1px solid #999; padding: 8px; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div id="content">${displayContent.replace(/\n/g, '<br/>')}</div>
+      <script>
+        function updateHeight() {
+          window.ReactNativeWebView.postMessage(document.getElementById('content').offsetHeight);
+        }
+        window.addEventListener('load', updateHeight);
+        new ResizeObserver(updateHeight).observe(document.getElementById('content'));
+      </script>
+    </body>
+    </html>
+  `;
+
+  if (!displayContent) return null;
 
   return (
-    <View style={styles.container}>
-      {parts.map((part, index) => {
-        // Detect if the part is math (starts/ends with $ or [MATH])
-        const isMath = (part.startsWith('$') && part.endsWith('$')) || 
-                       (part.startsWith('[MATH]') && part.endsWith('[/MATH]'));
-
-        if (isMath) {
-          // Clean the tags for LaTeX rendering
-          const latex = part.replace(/\$|\[MATH\]|\[\/MATH\]/g, '');
-          
-          return (
-            <View key={index} style={styles.mathWrapper}>
-              <WebView
-                originWhitelist={['*']}
-                scalesPageToFit={false}
-                scrollEnabled={false}
-                source={{ html: `
-                  <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-                    </head>
-                    <body style="margin:0; padding:0; background-color:transparent; display:flex; align-items:center;">
-                      <div style="font-size: 16px; color: #2c3e50; font-family: sans-serif;">
-                        \\(${latex}\\)
-                      </div>
-                    </body>
-                  </html>
-                `}}
-                style={styles.webview}
-              />
-            </View>
-          );
-        }
-
-        // Render plain text parts normally
-        return (
-          <Text key={index} style={styles.plainText}>
-            {part}
-          </Text>
-        );
-      })}
+    <View style={{ height: height + 20, width: '100%' }}>
+      <WebView
+        scrollEnabled={false}
+        onMessage={(event) => {
+          setHeight(Number(event.nativeEvent.data));
+          setLoading(false);
+        }}
+        source={{ html }}
+        javaScriptEnabled={true}
+        style={{ backgroundColor: 'transparent' }}
+      />
     </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    alignItems: 'center',
-    width: '100%' 
-  },
-  plainText: { 
-    fontSize: 16, 
-    color: '#2c3e50', 
-    lineHeight: 24 
-  },
-  mathWrapper: { 
-    height: 35, 
-    minWidth: 40, 
-    marginHorizontal: 2,
-    justifyContent: 'center' 
-  },
-  webview: { 
-    backgroundColor: 'transparent', 
-    width: 100, // Use a fixed or dynamic width logic if needed
-    height: 35 
-  }
 });

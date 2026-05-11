@@ -1,46 +1,81 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Question } from "./aiService";
+// services/scannerService.ts
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; // Best to use .env
-const genAI = new GoogleGenerativeAI(API_KEY);
+/**
+ * .env CONFIGURATION:
+ * Ensure your file is named ".env" (no extension) in the root folder.
+ * Contents: EXPO_PUBLIC_GEMINI_API_KEY=AIza...
+ */
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
-export const extractAllQuestionsFromImage = async (base64Image: string): Promise<Question[]> => {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-  
-  const prompt = `
-    PROMPT INSTRUCTION:
-      Extract questions from the image. 
-      Identify all mathematical symbols, equations, and formulas. 
-      Wrap these parts ONLY in single dollar signs. 
-      Example: "A particle travels with an acceleration of $(9 - 4v^2)ms^{-2}$."
-      Return as JSON.
+export async function extractAllQuestionsFromImage(base64Image: string): Promise<any> {
+  if (!API_KEY || API_KEY === '' || !genAI) {
+    throw new Error("API Configuration Error. Ensure your .env is set and Expo is restarted with 'npx expo start -c'");
+  }
 
-    STRUCTURE RULES:
-    - Return ONLY a raw JSON array.
-    - 'subQuestions' must be an array of simple strings.
+  const systemInstruction = `
+    You are an expert exam scanner designed to extract questions from printed or handwritten exam papers.
+    Your output MUST be a strict JSON object with a single "questions" array.
+    
+    CRITICAL RULES:
+    1. Convert math to LaTeX wrapped in single dollar signs $...$.
+    2. For MCQ: Use type: "MCQ", provide an "options" array, and leave "subQuestions" empty.
+    3. For Structural: Use type: "Structural", provide a "subQuestions" array, and leave "options" empty.
+    4. Format tables using Markdown pipe syntax (|).
+    5. Generate a unique string 'id' for each question.
+    6. Do NOT include question numbers (e.g., "1.") in the question text.
+    
+    JSON Output Format:
+    {
+      "questions": [
+        {
+          "id": "unique-id",
+          "type": "MCQ",
+          "question": "text",
+          "options": ["A", "B", "C", "D"],
+          "subQuestions": []
+        }
+      ]
+    }
   `;
 
   try {
-    const result = await model.generateContent([
-      prompt,
-      { inlineData: { data: base64Image, mimeType: "image/jpeg" } }
-    ]);
-    
-    const text = result.response.text();
-    const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const parsed: any[] = JSON.parse(cleanJson);
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      systemInstruction: systemInstruction,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.1,
+      }
+    });
 
-    return parsed.map(q => ({
-      ...q,
-      id: Math.random().toString(36).substring(2, 9) + Date.now().toString(),
-      // Force subQuestions to be strings immediately to prevent the Object crash
-      subQuestions: Array.isArray(q.subQuestions) 
-        ? q.subQuestions.map((s: any) => typeof s === 'object' ? (s.question || JSON.stringify(s)) : String(s))
-        : [],
-      type: (q.options?.length > 0) ? 'MCQ' : 'Structural'
-    }));
-  } catch (error) {
-    console.error("Scanner Service Error:", error);
-    return [];
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: base64Image
+        }
+      },
+      { text: "Extract all questions from this exam image into the specified JSON format." }
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
+    
+    // Clean up potential markdown blocks if the API ignores responseMimeType
+    const cleanText = text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(cleanText);
+
+    // Validation: Ensure the model returned the expected "questions" key
+    if (!parsed.questions || !Array.isArray(parsed.questions)) {
+      console.warn("AI returned JSON without a questions array:", parsed);
+      return { questions: [] };
+    }
+    return parsed;
+    
+  } catch (error: any) {
+    console.error("Scanner Error:", error);
+    throw new Error(error.message || "Extraction failed. Check API Key or image quality.");
   }
-};
+}

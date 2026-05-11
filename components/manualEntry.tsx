@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // 1. TYPES & STYLES
 import { Question } from '../services/aiService';
@@ -21,7 +21,7 @@ export default function ManualEntry({ onAddQuestion }: { onAddQuestion: (q: Ques
   const handleAdd = () => {
     if (!question.trim()) return;
     const newQ: Question = {
-      id: Math.random().toString(36).substr(2, 9) + Date.now().toString(),
+      id: Math.random().toString(36).substring(2, 11) + Date.now().toString(),
       type: type,
       question: question.trim(),
       ...(type === 'MCQ' 

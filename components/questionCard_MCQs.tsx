@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Question } from '../services/aiService';
+import { MathRenderer } from './mathRenderer';
 
 interface MCQProps {
   item: Question;
@@ -12,18 +13,24 @@ interface MCQProps {
 
 export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpdate }: MCQProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedText, setEditedText] = useState(item.question);
+  const [editedText, setEditedText] = useState(item?.question || "");
   // Ensure we have a valid array of strings
-  const [editedOptions, setEditedOptions] = useState<string[]>(item.options || []);
+  const [editedOptions, setEditedOptions] = useState<string[]>(item?.options || []);
 
-  const handleSave = () => {
+  // Sync state if item changes (Fixes Stale State Bug)
+  useEffect(() => {
+    setEditedText(item?.question || "");
+    setEditedOptions(item?.options || []);
+  }, [item]);
+
+  const handleSave = useCallback(() => {
     onUpdate({ 
       ...item, 
       question: editedText, 
       options: editedOptions 
     });
     setIsEditing(false);
-  };
+  }, [item, editedText, editedOptions, onUpdate]);
 
   const updateOptionText = (text: string, index: number) => {
     const newOptions = [...editedOptions];
@@ -68,7 +75,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
               <Text style={styles.optionLabel}>{String.fromCharCode(65 + i)})</Text>
               <TextInput 
                 style={styles.optInput} 
-                value={opt.replace(/^[A-Z][\).]\s*/i, "")} // Strip A) while editing
+                value={typeof opt === 'string' ? opt.replace(/^[A-Z][\).]\s*/i, "") : ""} 
                 onChangeText={(t) => updateOptionText(t, i)} 
               />
             </View>
@@ -76,13 +83,19 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
         </View>
       ) : (
         <View>
-          <Text style={styles.questionText}>{item.question}</Text>
+          {/* Render Question with Math Support */}
+          <MathRenderer content={item?.question} key={`main-${item?.id || 'mcq'}`} />
+          
           <View style={styles.optionsList}>
-            {editedOptions.map((opt, i) => (
-              <Text key={i} style={styles.optionText}>
-                <Text style={styles.boldLabel}>{String.fromCharCode(65 + i)})</Text> {opt.replace(/^[A-Z][\).]\s*/i, "")}
-              </Text>
-            ))}
+            {editedOptions.map((opt, i) => {
+              const displayOpt = typeof opt === 'string' ? opt.replace(/^[A-Z][\).]\s*/i, "") : String(opt || "");
+              return (
+                <View key={`opt-row-${i}`} style={styles.optionRow}>
+                  <Text style={styles.boldLabel}>{String.fromCharCode(65 + i)}) </Text>
+                  <View style={{ flex: 1 }}><MathRenderer content={displayOpt} /></View>
+                </View>
+              );
+            })}
           </View>
         </View>
       )}
@@ -103,7 +116,7 @@ const styles = StyleSheet.create({
   optionLabel: { fontWeight: 'bold', marginRight: 10, color: '#3498db' },
   optInput: { flex: 1, borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 3, fontSize: 14 },
   optionsList: { marginTop: 5 },
-  optionText: { fontSize: 14, color: '#555', marginBottom: 5 },
+  optionRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   boldLabel: { fontWeight: 'bold', color: '#333' },
   editForm: { paddingBottom: 10 }
 });

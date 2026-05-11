@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 // Context & Style Imports
 import { useExam } from '../../services/examContext';
 // Change this import
 import { extractAllQuestionsFromImage } from '../../services/scannerService';
-import { screenStyles as styles } from '../../styles/screenStyles';
 import { componentStyles as compStyles } from '../../styles/componentStyles';
+import { screenStyles as styles } from '../../styles/screenStyles';
 import { COLORS } from '../../styles/theme';
 
 export default function ScannerTab() {
@@ -69,7 +69,9 @@ export default function ScannerTab() {
         const b64 = await getBase64(img.uri);
         if (b64) {
           const res = await extractAllQuestionsFromImage(b64);
-          allExtracted = [...allExtracted, ...res];
+          if (res && res.questions) {
+            allExtracted = [...allExtracted, ...res.questions];
+          }
         }
       }
 
