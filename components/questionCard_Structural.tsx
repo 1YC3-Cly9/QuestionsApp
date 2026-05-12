@@ -81,7 +81,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
                     <Text style={[styles.subRoman, { width: 35, fontWeight: 'bold', color: '#34495e' }]}>
                       ({romanNumerals[i]})
                     </Text>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, minHeight: 20 }}>
                       <MathRenderer content={sub} key={`submath-${item?.id || i}-${i}`} />
                     </View>
                   </View>

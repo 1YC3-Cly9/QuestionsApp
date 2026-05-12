@@ -24,13 +24,18 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({ content }
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
       <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       <style>
-        body { font-family: sans-serif; font-size: 16px; margin: 0; padding: 10px; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        td { border: 1px solid #999; padding: 8px; text-align: center; }
+        body { font-family: sans-serif; font-size: 15px; margin: 0; padding: 5px; color: #333; background-color: transparent; }
+        .scroll-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; background: #fff; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; min-width: 50px; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        #content { word-wrap: break-word; }
       </style>
     </head>
     <body>
-      <div id="content">${displayContent.replace(/\n/g, '<br/>')}</div>
+      <div class="scroll-wrapper">
+        <div id="content">${displayContent.replace(/\n/g, '<br/>')}</div>
+      </div>
       <script>
         function updateHeight() {
           window.ReactNativeWebView.postMessage(document.getElementById('content').offsetHeight);

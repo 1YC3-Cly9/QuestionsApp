@@ -1,113 +1,89 @@
-// 2. CONFIGURATION
-//const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// 1. THE BLUEPRINT
 export interface Question {
-  id: string;
+  id: string; 
   type: 'MCQ' | 'Structural';
   question: string;
-  options?: string[];
-  subQuestions?: string[];
+  options?: string[];       
+  subQuestions?: string[];  
+  marks?: number;
 }
 
-// services/scannerService.ts
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Initialize your API Client (Make sure your API key is correctly configured)
-const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY || '');
+// 2. CONFIGURATION
+const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; 
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 /**
- * Fetches generated questions based on a text prompt (used by Quick AI tab)
+ * GENERATE QUESTIONS VIA TEXT PROMPT (Quick AI Tab)
  */
-export async function fetchQuestionsFromAI(topic: string, count: number, difficulty: string, type: string): Promise<Question[]> {
-  try {
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      generationConfig: { 
-        responseMimeType: 'application/json',
-        temperature: 0.7 
-      },
-      systemInstruction: `You are an academic exam generator. 
-      Generate exactly ${count} ${difficulty} difficulty ${type} questions about ${topic}.
-      Return a JSON object with a "questions" array. 
-      Schema: { "questions": [{ "id": "string", "type": "${type}", "question": "string", "options": ["string"], "subQuestions": ["string"] }] }
-      - Use LaTeX for math wrapped in single dollar signs $...$.
-      - For MCQ: provide 4 options.
-      - For Structural: provide sub-parts in subQuestions.`
-    });
-
-    const prompt = `Generate the questions now.`;
-
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-    
-    return parsed.questions || [];
-  } catch (error) {
-    console.error("AI Generation Error:", error);
-    throw error;
-  }
-}
-
-export async function scanExamImage(base64Image: string): Promise<any> {
-  const systemInstruction = `
-    You are an expert exam scanner designed to extract questions from printed or handwritten exam papers.
-    Your output MUST be a strict JSON object with a single "questions" array.
-    
-    CRITICAL RULES FOR EXTRACTION:
-    1. If a question contains a table (for example: a frequency distribution, a mapping, or a data set):
-       - Do NOT split the rows, headers, or any part of the table into subQuestions.
-       - The entire table MUST remain in the "question" field.
-       - Format the table inside the "question" field using standard Markdown pipe characters (|).
-       - Ensure all columns line up. Example:
-         | Time in minutes | 1-3 | 4-6 | 7-9 |
-         | Frequency       |  3  |  5  |  9  |
-    
-    2. "subQuestions" must ONLY contain actual distinct child parts of a question (typically marked with (i), (ii), (a), (b)).
-    3. Convert mathematical expressions, formulas, variables, and symbols to LaTeX format wrapped in single dollar signs like $x^2 + y^2 = r^2$.
-    4. Remove any explicit question numbers from the extracted text (e.g., do not output "3. Calculate...", instead output "Calculate...").
-    
-    JSON Output Format:
-    {
-      "questions": [
-        {
-          "id": "generate-a-unique-string-uuid",
-          "question": "Use the table below to answer the following questions:\\n\\n| Time in minutes | 1-3 | 4-6 | 7-9 |\\n| Frequency       |  3  |  5  |  9  |",
-          "subQuestions": [
-            "State the modal class.",
-            "Calculate an estimate of the mean time."
-          ]
-        }
-      ]
+export const fetchQuestionsFromAI = async (
+  topic: string, 
+  count: number, 
+  difficulty: string,
+  type: 'MCQ' | 'Structural',
+  className: string // Added class parameter
+): Promise<Question[]> => {
+  
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-2.5-flash",
+    generationConfig: {
+      responseMimeType: "application/json",
     }
+  });
+
+  const prompt = `
+    Generate ${count} ${type} exam questions for a ${className} class.
+    Topic: ${topic}
+    Difficulty: ${difficulty}
+
+    REQUIREMENTS:
+    1. Do NOT include question numbers (like "1." or "Question 1") in the text.
+    2. For MCQ: Provide 4 distinct options in an array.
+    3. For Structural: Provide 2-3 sub-questions in an array.
+    4. Math: Wrap all formulas in single dollar signs $...$ and ensure backslashes are double-escaped for JSON (e.g., \\\\sin).
+    5. Tables: If the question requires a table, use standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>).
+    4. Ensure the content is strictly relevant to the topic and grade level.
+
+    Return ONLY a raw JSON array:
+    [
+      {
+        "id": "unique_string",
+        "type": "${type}",
+        "question": "string",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "subQuestions": ["Sub-part i", "Sub-part ii"]
+      }
+    ]
   `;
 
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      systemInstruction: systemInstruction,
-      generationConfig: { responseMimeType: 'application/json' }
-    });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    
+    // Simple cleaning of the AI response
+    const cleanJson = text.replace(/```json|```/g, "").trim();
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: base64Image
-        }
-      },
-      { text: "Extract the questions from this exam sheet following the system instructions strictly." }
-    ]);
+    // Surgical sanitization: Double backslashes that are NOT part of valid JSON escapes
+    // This prevents breaking valid escapes like \" while fixing LaTeX like \sin
+    const sanitizedJson = cleanJson.replace(/\\(?![\\\/bfnrtu])/g, '\\\\');
 
-    const responseText = result.response.text();
-    if (!responseText) {
-      throw new Error("No response content from Gemini API.");
-    }
+    const data = JSON.parse(sanitizedJson);
+    
+    // Ensure we are mapping an array regardless of whether AI wrapped it in an object
+    const questionsArray = Array.isArray(data) ? data : (data.questions || []);
 
-    // Ensure we handle potential markdown wrapping even with JSON mimeType
-    const cleanJson = responseText.replace(/```json|```/g, "").trim();
-    return JSON.parse(cleanJson);
+    return questionsArray.map((q: any) => ({
+      ...q,
+      id: String(q.id || Math.random().toString(36).substring(2, 9)),
+      options: Array.isArray(q.options) ? q.options : [],
+      // Ensure subQuestions are always strings, even if AI returns objects
+      subQuestions: Array.isArray(q.subQuestions)
+        ? q.subQuestions.map((s: any) => typeof s === 'object' ? (s.question || `[Sub-question object: ${s.id}]`) : String(s))
+        : []
+    }));
   } catch (error) {
-    console.error("Scanner Service Error:", error);
-    throw error;
+    console.error("AI Generation Error:", error);
+    return [];
   }
-}
+};

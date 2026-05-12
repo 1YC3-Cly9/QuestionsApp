@@ -22,7 +22,7 @@ export async function extractAllQuestionsFromImage(base64Image: string): Promise
     1. Convert math to LaTeX wrapped in single dollar signs $...$.
     2. For MCQ: Use type: "MCQ", provide an "options" array, and leave "subQuestions" empty.
     3. For Structural: Use type: "Structural", provide a "subQuestions" array, and leave "options" empty.
-    4. Format tables using Markdown pipe syntax (|).
+    4. Format tables using standard HTML <table> tags (e.g., <table><tr><td>Value</td></tr></table>).
     5. Generate a unique string 'id' for each question.
     6. Do NOT include question numbers (e.g., "1.") in the question text.
     
