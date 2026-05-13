@@ -92,7 +92,9 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
               return (
                 <View key={`opt-row-${i}`} style={styles.optionRow}>
                   <Text style={styles.boldLabel}>{String.fromCharCode(65 + i)}) </Text>
-                  <View style={{ flex: 1 }}><MathRenderer content={displayOpt} /></View>
+                  <View style={styles.mathWrapper}>
+                    <MathRenderer content={displayOpt} />
+                  </View>
                 </View>
               );
             })}
@@ -117,6 +119,7 @@ const styles = StyleSheet.create({
   optInput: { flex: 1, borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 3, fontSize: 14 },
   optionsList: { marginTop: 5 },
   optionRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  mathWrapper: { flex: 1, minHeight: 20, justifyContent: 'center' }, // Ensures the WebView has enough baseline space
   boldLabel: { fontWeight: 'bold', color: '#333' },
   editForm: { paddingBottom: 10 }
 });

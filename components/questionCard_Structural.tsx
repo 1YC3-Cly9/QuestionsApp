@@ -1,11 +1,18 @@
 // components/QuestionCard_Structural.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { cardStyles as styles } from '../styles/cardStyles';
+import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Question } from '../services/aiService';
 import { MathRenderer } from './mathRenderer';
 
-export default function QuestionCard_Structural({ item, displayIndex, onDelete, onUpdate }: any) {
+interface StructuralProps {
+  item: Question;
+  displayIndex: number;
+  onDelete: (id: string) => void;
+  onUpdate: (updatedQ: Question) => void;
+}
+
+export default function QuestionCard_Structural({ item, displayIndex, onDelete, onUpdate }: StructuralProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(item?.question || "");
   const [editedSubs, setEditedSubs] = useState(item?.subQuestions || []);
@@ -13,7 +20,13 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
   const handleSave = useCallback(() => {
     onUpdate({ ...item, question: editedText, subQuestions: editedSubs });
     setIsEditing(false);
-  }, [item, editedText, editedSubs, onUpdate]);
+  }, [item, editedText, editedSubs, onUpdate]); 
+
+  // Sync state if item changes (Fixes Stale State Bug)
+  useEffect(() => {
+    setEditedText(item?.question || "");
+    setEditedSubs(item?.subQuestions || []);
+  }, [item]);
 
   const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'];
 
@@ -81,7 +94,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
                     <Text style={[styles.subRoman, { width: 35, fontWeight: 'bold', color: '#34495e' }]}>
                       ({romanNumerals[i]})
                     </Text>
-                    <View style={{ flex: 1, minHeight: 20 }}>
+                    <View style={styles.mathWrapper}>
                       <MathRenderer content={sub} key={`submath-${item?.id || i}-${i}`} />
                     </View>
                   </View>
@@ -94,3 +107,26 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 15, borderLeftWidth: 5, borderLeftColor: '#f39c12', elevation: 2 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  qType: { fontSize: 10, fontWeight: 'bold', color: '#e67e22', textTransform: 'uppercase' },
+  input: { borderBottomWidth: 1, borderBottomColor: '#f39c12', paddingVertical: 5, fontSize: 16, color: '#2c3e50', marginBottom: 10 },
+  optInput: { flex: 1, borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 3, fontSize: 14, marginBottom: 8 },
+  viewContainer: { 
+    paddingVertical: 5,
+    flexDirection: 'column'
+  },
+  subRow: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-start', 
+    marginBottom: 8
+  },
+  subRoman: { marginRight: 5, fontSize: 14, color: '#555' },
+  mathWrapper: { 
+    flex: 1, 
+    minHeight: 30, // Increased baseline
+    alignSelf: 'stretch' 
+  },
+});

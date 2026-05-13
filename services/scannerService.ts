@@ -1,16 +1,16 @@
 // services/scannerService.ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Question } from './aiService'; // Import Question interface
 
 /**
  * .env CONFIGURATION:
  * Ensure your file is named ".env" (no extension) in the root folder.
  * Contents: EXPO_PUBLIC_GEMINI_API_KEY=AIza...
  */
-const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
+const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY || '');
 
-export async function extractAllQuestionsFromImage(base64Image: string): Promise<any> {
-  if (!API_KEY || API_KEY === '' || !genAI) {
+export async function extractAllQuestionsFromImage(base64Image: string): Promise<{ questions: Question[] }> {
+  if (!process.env.EXPO_PUBLIC_GEMINI_API_KEY) {
     throw new Error("API Configuration Error. Ensure your .env is set and Expo is restarted with 'npx expo start -c'");
   }
 
@@ -22,7 +22,7 @@ export async function extractAllQuestionsFromImage(base64Image: string): Promise
     1. Convert math to LaTeX wrapped in single dollar signs $...$.
     2. For MCQ: Use type: "MCQ", provide an "options" array, and leave "subQuestions" empty.
     3. For Structural: Use type: "Structural", provide a "subQuestions" array, and leave "options" empty.
-    4. Format tables using standard HTML <table> tags (e.g., <table><tr><td>Value</td></tr></table>).
+    4. Tables: If the image contains tabular data, format it using standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
     5. Generate a unique string 'id' for each question.
     6. Do NOT include question numbers (e.g., "1.") in the question text.
     
@@ -64,8 +64,9 @@ export async function extractAllQuestionsFromImage(base64Image: string): Promise
     const text = response.text();
     
     // Clean up potential markdown blocks if the API ignores responseMimeType
-    const cleanText = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleanText);
+    const cleanJson = text.replace(/```json|```/g, "").trim();
+    // Rely on responseMimeType: "application/json" to handle escaping correctly.
+    const parsed = JSON.parse(cleanJson);
 
     // Validation: Ensure the model returned the expected "questions" key
     if (!parsed.questions || !Array.isArray(parsed.questions)) {

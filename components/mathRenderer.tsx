@@ -15,7 +15,7 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({ content }
   const displayContent = useMemo(() => {
     if (!content) return "";
     return String(content).replace(/\$(.*?)\$/g, '\\($1\\)');
-  }, [content]);
+  }, [content]); 
 
   const html = `
     <!DOCTYPE html>
@@ -34,14 +34,27 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({ content }
     </head>
     <body>
       <div class="scroll-wrapper">
-        <div id="content">${displayContent.replace(/\n/g, '<br/>')}</div>
+        <div id="content" style="display: inline-block; width: 100%;">${displayContent.replace(/\n/g, '<br/>')}</div>
       </div>
       <script>
         function updateHeight() {
-          window.ReactNativeWebView.postMessage(document.getElementById('content').offsetHeight);
+          // scrollHeight is more accurate than offsetHeight for dynamic content
+          const height = document.body.scrollHeight;
+          if (height > 0) {
+            window.ReactNativeWebView.postMessage(height.toString());
+          }
         }
-        window.addEventListener('load', updateHeight);
-        new ResizeObserver(updateHeight).observe(document.getElementById('content'));
+        window.addEventListener('load', () => {
+          updateHeight();
+          // Observe any changes to the DOM (like MathJax finishing a render)
+          const observer = new MutationObserver(updateHeight);
+          observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+          // Also watch for window resizing
+          window.addEventListener('resize', updateHeight);
+        });
+        // Fallback for slower renders
+        setTimeout(updateHeight, 500);
+        setTimeout(updateHeight, 1500);
       </script>
     </body>
     </html>
@@ -50,11 +63,12 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({ content }
   if (!displayContent) return null;
 
   return (
-    <View style={{ height: height + 20, width: '100%' }}>
+    <View style={{ height: height + 15, width: '100%', overflow: 'hidden' }}> 
       <WebView
         scrollEnabled={false}
         onMessage={(event) => {
-          setHeight(Number(event.nativeEvent.data));
+          const newHeight = Number(event.nativeEvent.data);
+          if (newHeight > 0) setHeight(newHeight);
           setLoading(false);
         }}
         source={{ html }}

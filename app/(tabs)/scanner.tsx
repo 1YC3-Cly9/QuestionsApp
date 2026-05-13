@@ -81,8 +81,9 @@ export default function ScannerTab() {
       Alert.alert("Success", `${allExtracted.length} questions added to your exam paper!`);
       setSelectedDocs([]);
       setSelectedImages([]);
-    } catch (error) {
-      Alert.alert("Error", "Extraction failed. Please try again.");
+    } catch (error: any) {
+      console.error("Process Items Error:", error);
+      Alert.alert("Extraction Failed", error.message || "An unknown error occurred. Please check console for details.");
     } finally {
       setIsProcessing(false);
     }

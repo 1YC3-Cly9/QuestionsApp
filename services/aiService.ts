@@ -11,7 +11,7 @@ export interface Question {
 }
 
 // 2. CONFIGURATION
-const API_KEY = "AIzaSyCsdEKaaeg1xlK-oGZhBOGYGg59B5T-NbA"; 
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 /**
@@ -42,8 +42,8 @@ export const fetchQuestionsFromAI = async (
     2. For MCQ: Provide 4 distinct options in an array.
     3. For Structural: Provide 2-3 sub-questions in an array.
     4. Math: Wrap all formulas in single dollar signs $...$ and ensure backslashes are double-escaped for JSON (e.g., \\\\sin).
-    5. Tables: If the question requires a table, use standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>).
-    4. Ensure the content is strictly relevant to the topic and grade level.
+    5. Tables: If the question requires a table, use standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
+    6. Ensure the content is strictly relevant to the topic and grade level.
 
     Return ONLY a raw JSON array:
     [
@@ -63,12 +63,8 @@ export const fetchQuestionsFromAI = async (
     
     // Simple cleaning of the AI response
     const cleanJson = text.replace(/```json|```/g, "").trim();
-
-    // Surgical sanitization: Double backslashes that are NOT part of valid JSON escapes
-    // This prevents breaking valid escapes like \" while fixing LaTeX like \sin
-    const sanitizedJson = cleanJson.replace(/\\(?![\\\/bfnrtu])/g, '\\\\');
-
-    const data = JSON.parse(sanitizedJson);
+    // Rely on responseMimeType: "application/json" to handle escaping correctly.
+    const data = JSON.parse(cleanJson);
     
     // Ensure we are mapping an array regardless of whether AI wrapped it in an object
     const questionsArray = Array.isArray(data) ? data : (data.questions || []);
