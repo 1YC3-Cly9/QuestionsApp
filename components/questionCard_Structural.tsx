@@ -61,10 +61,11 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
             multiline 
           />
           {Array.isArray(editedSubs) && editedSubs.map((sub: any, i: number) => {
-            const displaySub = (sub !== null && sub !== undefined) ? String(sub) : "";
+            // Extract text from object or fallback to string representation
+            const displaySub = typeof sub === 'object' ? (sub.question || sub.text || JSON.stringify(sub)) : String(sub || "");
             return (
               <View key={`edit-${item?.id || i}-${i}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ width: 30, fontWeight: 'bold', color: '#2c3e50' }}>{romanNumerals[i]}.</Text>
+                <Text style={{ width: 30, fontWeight: 'bold', color: '#2c3e50' }}>{romanNumerals[i] || i + 1}.</Text>
                 <TextInput 
                   style={[styles.optInput, { flex: 1 }]} 
                   value={displaySub} 
@@ -88,14 +89,17 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
           {item?.subQuestions && Array.isArray(item.subQuestions) && item.subQuestions.length > 0 && (
             <View style={{ marginTop: 10 }}>
               {item.subQuestions.map((sub: any, i: number) => {
-                if (sub === null || sub === undefined || typeof sub !== 'string' || sub.trim() === "") return null;
+                // Extract content string before rendering
+                const subContent = typeof sub === 'object' ? (sub.question || sub.text || JSON.stringify(sub)) : String(sub || "");
+                if (!subContent || subContent.trim() === "") return null;
+                
                 return (
                   <View key={`subrow-${item?.id || i}-${i}`} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' }}>
                     <Text style={[styles.subRoman, { width: 35, fontWeight: 'bold', color: '#34495e' }]}>
-                      ({romanNumerals[i]})
+                      ({romanNumerals[i] || i + 1})
                     </Text>
                     <View style={styles.mathWrapper}>
-                      <MathRenderer content={sub} key={`submath-${item?.id || i}-${i}`} />
+                      <MathRenderer content={subContent} key={`submath-${item?.id || i}-${i}`} />
                     </View>
                   </View>
                 );

@@ -21,10 +21,12 @@ export async function extractAllQuestionsFromImage(base64Image: string): Promise
     CRITICAL RULES:
     1. Convert math to LaTeX wrapped in single dollar signs $...$.
     2. For MCQ: Use type: "MCQ", provide an "options" array, and leave "subQuestions" empty.
-    3. For Structural: Use type: "Structural", provide a "subQuestions" array, and leave "options" empty.
+    3. For Structural: Identify the main question stem. If a question has sub-parts (labeled i, ii, iii or a, b, c), group them into the "subQuestions" array. 
+       The main "question" field should contain the introductory text, and sub-parts MUST NOT be treated as separate top-level questions.
     4. Tables: If the image contains tabular data, format it using standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
     5. Generate a unique string 'id' for each question.
     6. Do NOT include question numbers (e.g., "1.") in the question text.
+    7. Hierarchy: Maintain the logical structure of the exam paper. Parts of a question belong to the question that preceded them.
     
     JSON Output Format:
     {
@@ -73,7 +75,25 @@ export async function extractAllQuestionsFromImage(base64Image: string): Promise
       console.warn("AI returned JSON without a questions array:", parsed);
       return { questions: [] };
     }
-    return parsed;
+
+    // Robust mapping to ensure everything is a string
+    const cleanedQuestions = parsed.questions.map((q: any) => {
+      // Flatten parent question if it's an object
+      const mainQuestion = typeof q.question === 'object' 
+        ? (q.question.text || q.question.question || JSON.stringify(q.question)) 
+        : String(q.question || "");
+
+      return {
+        ...q,
+        id: String(q.id || Math.random().toString(36).substring(2, 9)),
+        question: mainQuestion,
+        subQuestions: Array.isArray(q.subQuestions)
+          ? q.subQuestions.map((s: any) => (typeof s === 'object' ? (s.question || s.text || JSON.stringify(s)) : String(s)))
+          : []
+      };
+    });
+
+    return { questions: cleanedQuestions };
     
   } catch (error: any) {
     console.error("Scanner Error:", error);

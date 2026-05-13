@@ -40,12 +40,13 @@ export const fetchQuestionsFromAI = async (
     REQUIREMENTS:
     1. Do NOT include question numbers (like "1." or "Question 1") in the text.
     2. For MCQ: Provide 4 distinct options in an array.
-    3. For Structural: Provide 2-3 sub-questions in an array.
+    3. For Structural: Provide a main question stem/context in the "question" field and 2-3 specific sub-parts in the "subQuestions" array.
     4. Math: Wrap all formulas in single dollar signs $...$ and ensure backslashes are double-escaped for JSON (e.g., \\\\sin).
     5. Tables: If the question requires a table, use standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
     6. Ensure the content is strictly relevant to the topic and grade level.
+    7. Logic: Sub-parts must be logically dependent on or related to the main question text.
 
-    Return ONLY a raw JSON array:
+    Return ONLY a JSON object with a "questions" array:
     [
       {
         "id": "unique_string",
