@@ -1,10 +1,10 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, Text } from 'react-native';
-import { useExam } from '../../services/examContext';
-import { Question } from '../../services/aiService';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ManualEntry from '../../components/manualEntry';
 import QuestionCard_MCQs from '../../components/questionCard_MCQs';
 import QuestionCard_Structural from '../../components/questionCard_Structural';
+import { Question } from '../../services/aiService';
+import { useExam } from '../../services/examContext';
 
 export default function ManualTab() {
   const { questions, setQuestions } = useExam();
@@ -23,41 +23,52 @@ export default function ManualTab() {
     };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.title}>Manual Entry</Text>
-      
-      {/* Component to add new questions */}
-      <ManualEntry onAddQuestion={(newQ) => setQuestions([...questions, newQ])} />
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      keyboardVerticalOffset={Platform.OS === "ios" ? 130 : 80} 
+    >
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
+        <Text style={styles.title}>Manual Entry</Text>
+        
+        {/* Component to add new questions */}
+        <ManualEntry onAddQuestion={(newQ) => setQuestions([...questions, newQ])} />
 
-      <View style={styles.listContainer}>
-        {questions.map((q, index) => {
-          if (!q || !q.id) return null;
+        <View style={styles.listContainer}>
+          {questions.map((q, index) => {
+            if (!q || !q.id) return null;
 
-          // 3. FIX: Pass onUpdate prop to the card components
-          if (q.type === 'MCQ') {
-            return (
-              <QuestionCard_MCQs 
-                key={q.id} 
-                item={q} 
-                displayIndex={index + 1} 
-                onDelete={handleDelete}
-                onUpdate={handleUpdateQuestion} 
-              />
-            );
-          } else {
-            return (
-              <QuestionCard_Structural 
-                key={q.id} 
-                item={q} 
-                displayIndex={index + 1} 
-                onDelete={handleDelete}
-                onUpdate={handleUpdateQuestion} 
-              />
-            );
-          }
-        })}
-      </View>
-    </ScrollView>
+            // 3. FIX: Pass onUpdate prop to the card components
+            if (q.type === 'MCQ') {
+              return (
+                <QuestionCard_MCQs 
+                  key={q.id} 
+                  item={q} 
+                  displayIndex={index + 1} 
+                  onDelete={handleDelete}
+                  onUpdate={handleUpdateQuestion} 
+                />
+              );
+            } else {
+              return (
+                <QuestionCard_Structural 
+                  key={q.id} 
+                  item={q} 
+                  displayIndex={index + 1} 
+                  onDelete={handleDelete}
+                  onUpdate={handleUpdateQuestion} 
+                />
+              );
+            }
+          })}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Question } from '../services/aiService';
 import { MathRenderer } from './mathRenderer';
+import { UndoButton } from './undoButton';
 
 interface MCQProps {
   item: Question;
@@ -16,6 +17,17 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
   const [editedText, setEditedText] = useState(item?.question || "");
   // Ensure we have a valid array of strings
   const [editedOptions, setEditedOptions] = useState<string[]>(item?.options || []);
+  const [history, setHistory] = useState<Question[]>([]);
+
+  // Multi-step dirty logic
+  const isDirty = useMemo(() => {
+    if (isEditing) {
+      return (editedText || "").trim() !== (item?.question || "").trim() || 
+             JSON.stringify(editedOptions) !== JSON.stringify(item?.options || []) ||
+             history.length > 0;
+    }
+    return history.length > 0;
+  }, [isEditing, editedText, editedOptions, item?.question, item?.options, history]);
 
   // Sync state if item changes (Fixes Stale State Bug)
   useEffect(() => {
@@ -24,6 +36,11 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
   }, [item]);
 
   const handleSave = useCallback(() => {
+    // Add current saved item to history before updating with new edits
+    if ((editedText || "").trim() !== (item?.question || "").trim() || JSON.stringify(editedOptions) !== JSON.stringify(item?.options || [])) {
+      setHistory(prev => [...prev, item]);
+    }
+
     onUpdate({ 
       ...item, 
       question: editedText, 
@@ -38,11 +55,33 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
     setEditedOptions(newOptions);
   };
 
+  const handleUndo = () => {
+    if (isEditing) {
+      setEditedText(item.question);
+      setEditedOptions(item.options || []);
+      setIsEditing(false);
+      return;
+    }
+
+    if (history.length > 0) {
+      const prevState = history[history.length - 1];
+      onUpdate(prevState);
+      setHistory(prev => prev.slice(0, -1));
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.qType}>Question {displayIndex} (MCQ)</Text>
         <View style={styles.actionButtons}>
+          <View style={{ marginRight: 15 }}>
+            <UndoButton 
+              isDirty={isDirty} 
+              onPress={handleUndo} 
+              activeColor="#007bff"
+            />
+          </View>
           <TouchableOpacity 
             onPress={() => (isEditing ? handleSave() : setIsEditing(true))} 
             style={styles.iconBtn}

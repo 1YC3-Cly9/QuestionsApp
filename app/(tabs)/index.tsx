@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { ScrollView, Alert, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 // 1. SERVICES & CONTEXT
-import { useExam } from '../../services/examContext';
 import { fetchQuestionsFromAI, Question } from '../../services/aiService';
+import { useExam } from '../../services/examContext';
 
 // 2. EXTERNAL STYLES
 import { screenStyles as styles } from '../../styles/screenStyles';
 
 // 3. COMPONENTS
-import SchoolDetails from '../../components/schoolDetails';
 import ExamForm from '../../components/examForm';
 import QuestionCard_MCQs from '../../components/questionCard_MCQs';
 import QuestionCard_Structural from '../../components/questionCard_Structural';
+import SchoolDetails from '../../components/schoolDetails';
 
 export default function QuickAiTab() {
   const { 
@@ -73,46 +73,57 @@ export default function QuickAiTab() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      
-      {/* HEADER & FORM SECTION */}
-      <SchoolDetails 
-        data={{ schoolName, className, totalMarks, logoUri }} 
-        setters={{ setSchoolName, setClassName, setTotalMarks }} 
-        onPickImage={handlePickImage}
-      />
-      
-      <ExamForm 
-        data={{ topic, count, type, difficulty }} 
-        setters={{ setTopic, setCount, setType, setDifficulty }} 
-        onGenerate={handleGenerate} 
-        isLoading={loading} 
-      />
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 130 : 80}
+    >
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
+        
+        {/* HEADER & FORM SECTION */}
+        <SchoolDetails 
+          data={{ schoolName, className, totalMarks, logoUri }} 
+          setters={{ setSchoolName, setClassName, setTotalMarks }} 
+          onPickImage={handlePickImage}
+        />
+        
+        <ExamForm 
+          data={{ topic, count, type, difficulty }} 
+          setters={{ setTopic, setCount, setType, setDifficulty }} 
+          onGenerate={handleGenerate} 
+          isLoading={loading} 
+        />
 
-      {/* QUESTIONS LIST SECTION */}
-      <View style={styles.listSection}>
-        {questions.map((q, index) => {
-          if (!q || !q.id) return null;
+        {/* QUESTIONS LIST SECTION */}
+        <View style={styles.listSection}>
+          {questions.map((q, index) => {
+            if (!q || !q.id) return null;
 
-          return q.type === 'MCQ' ? (
-            <QuestionCard_MCQs 
-              key={q.id} 
-              item={q} 
-              displayIndex={index + 1} 
-              onDelete={handleDelete}
-              onUpdate={handleUpdateQuestion} 
-            />
-          ) : (
-            <QuestionCard_Structural 
-              key={q.id} 
-              item={q} 
-              displayIndex={index + 1} 
-              onDelete={handleDelete}
-              onUpdate={handleUpdateQuestion} 
-            />
-          );
-        })}
-      </View>
-    </ScrollView>
+            return q.type === 'MCQ' ? (
+              <QuestionCard_MCQs 
+                key={q.id} 
+                item={q} 
+                displayIndex={index + 1} 
+                onDelete={handleDelete}
+                onUpdate={handleUpdateQuestion} 
+              />
+            ) : (
+              <QuestionCard_Structural 
+                key={q.id} 
+                item={q} 
+                displayIndex={index + 1} 
+                onDelete={handleDelete}
+                onUpdate={handleUpdateQuestion} 
+              />
+            );
+          })}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
