@@ -199,10 +199,15 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
           {/* Visual Table Editor: Direct editing of cells */}
           {tableGrid.length > 0 && (
             <View style={styles.tableEditorContainer}>
-              <Text style={styles.label}>Edit Table Data:</Text>
+              <Text style={styles.label}>Edit Table (Swipe slider below to scroll):</Text>
               <ScrollView style={{ maxHeight: 250 }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={true} keyboardShouldPersistTaps="handled">
-                  <View>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true} 
+                  persistentScrollbar={true}
+                  keyboardShouldPersistTaps="always"
+                >
+                  <View style={{ paddingBottom: 10 }}>
                     {tableGrid.map((row, rowIndex) => (
                       <View key={`row-${rowIndex}`} style={{ flexDirection: 'row' }}>
                         {row.map((cell, colIndex) => (
@@ -224,6 +229,8 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
                         ))}
                       </View>
                     ))}
+                    {/* Highlighted Slider Track */}
+                    <View style={styles.tableScrollSlider} />
                   </View>
                 </ScrollView>
               </ScrollView>
@@ -317,6 +324,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
     color: '#2c3e50'
   },
+  tableScrollSlider: { 
+    height: 15, // Increased height for better visibility
+    backgroundColor: '#bdc3c7', 
+    borderRadius: 7.5, 
+    marginTop: 15, 
+    width: '100%',
+    opacity: 0.8
+  },
   dynamicRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   addBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 10, alignSelf: 'flex-start' },
   addBtnText: { color: '#27ae60', fontWeight: 'bold', marginLeft: 5 },
@@ -332,7 +347,7 @@ const styles = StyleSheet.create({
   subRoman: { marginRight: 5, fontSize: 14, color: '#555' },
   mathWrapper: { 
     flex: 1, 
-    minHeight: 30, // Increased baseline
+    minHeight: 24, // Optimized height
     alignSelf: 'stretch' 
   },
 });
