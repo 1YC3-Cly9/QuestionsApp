@@ -49,7 +49,7 @@ export default function QuickAiTab() {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const newQs = await fetchQuestionsFromAI(topic, count, difficulty, type);
+      const newQs = await fetchQuestionsFromAI(topic, count, difficulty, type, className);
       setQuestions([...questions, ...newQs]);
     } catch (e) { 
       Alert.alert("Error", "Failed to generate."); 

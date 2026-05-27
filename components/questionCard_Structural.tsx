@@ -166,32 +166,31 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
       {/* Header Panel */}
       <View style={styles.header}>
         <Text style={styles.qType}>Question {displayIndex + 1}</Text>
-        <View style={{ flexDirection: 'row' }}>
-          <View style={{ marginRight: 15 }}>
-            <UndoButton 
-              isDirty={isDirty} 
-              onPress={handleUndo} 
-            />
-          </View>
-          {/* Move Up Button */}
+        <View style={styles.actionButtons}>
           <TouchableOpacity 
             onPress={() => onMoveUp?.(item.id)} 
             disabled={displayIndex === 0}
             style={[styles.moveButton, displayIndex === 0 && styles.moveButtonDisabled]}
           >
-            <Ionicons name="arrow-up-outline" size={22} color={displayIndex === 0 ? "#bdc3c7" : "#3498db"} />
+            <Ionicons name="arrow-up-outline" size={22} color={displayIndex === 0 ? "#bdc3c7" : "#f39c12"} />
           </TouchableOpacity>
-          {/* Move Down Button */}
           <TouchableOpacity 
             onPress={() => onMoveDown?.(item.id)} 
             disabled={totalQuestions !== undefined && displayIndex === totalQuestions - 1}
             style={[styles.moveButton, (totalQuestions !== undefined && displayIndex === totalQuestions - 1) && styles.moveButtonDisabled]}
           >
-            <Ionicons name="arrow-down-outline" size={22} color={(totalQuestions !== undefined && displayIndex === totalQuestions - 1) ? "#bdc3c7" : "#3498db"} />
+            <Ionicons name="arrow-down-outline" size={22} color={(totalQuestions !== undefined && displayIndex === totalQuestions - 1) ? "#bdc3c7" : "#f39c12"} />
           </TouchableOpacity>
+          <View style={styles.undoButtonWrapper}>
+            <UndoButton 
+              isDirty={isDirty} 
+              onPress={handleUndo}
+              activeColor="#f39c12"
+            />
+          </View>
           <TouchableOpacity 
             onPress={() => (isEditing ? handleSave() : enterEditMode())} // Call enterEditMode here
-            style={{ marginRight: 15 }}
+            style={styles.editSaveButton}
           >
             <Ionicons 
               name={isEditing ? "checkmark-circle" : "create-outline"} 
@@ -375,5 +374,15 @@ const styles = StyleSheet.create({
   },
   moveButtonDisabled: {
     opacity: 0.5,
+  },
+  actionButtons: { // New style to group and align action buttons
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  undoButtonWrapper: { // Wrapper for UndoButton to apply consistent margin
+    marginRight: 10,
+  },
+  editSaveButton: { // Style for Edit/Save button
+    marginRight: 10,
   },
 });

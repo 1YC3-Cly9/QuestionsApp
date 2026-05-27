@@ -76,39 +76,37 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.qType}>Question {displayIndex + 1} (MCQ)</Text>
+        <Text style={styles.qType}>Question {displayIndex + 1}</Text>
         <View style={styles.actionButtons}>
-          <View style={{ marginRight: 15 }}>
+          <TouchableOpacity 
+            onPress={() => onMoveUp?.(item.id)} 
+            disabled={displayIndex === 0}
+            style={[styles.moveButton, displayIndex === 0 && styles.moveButtonDisabled]}
+          >
+            <Ionicons name="arrow-up-outline" size={22} color={displayIndex === 0 ? "#bdc3c7" : "#007bff"} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => onMoveDown?.(item.id)} 
+            disabled={totalQuestions !== undefined && displayIndex === totalQuestions - 1}
+            style={[styles.moveButton, (totalQuestions !== undefined && displayIndex === totalQuestions - 1) && styles.moveButtonDisabled]}
+          >
+            <Ionicons name="arrow-down-outline" size={22} color={(totalQuestions !== undefined && displayIndex === totalQuestions - 1) ? "#bdc3c7" : "#007bff"} />
+          </TouchableOpacity>
+          <View style={styles.undoButtonWrapper}>
             <UndoButton 
               isDirty={isDirty} 
               onPress={handleUndo} 
               activeColor="#007bff"
             />
           </View>
-          {/* Move Up Button */}
-          <TouchableOpacity 
-            onPress={() => onMoveUp?.(item.id)} 
-            disabled={displayIndex === 0}
-            style={[styles.moveButton, displayIndex === 0 && styles.moveButtonDisabled]}
-          >
-            <Ionicons name="arrow-up-outline" size={22} color={displayIndex === 0 ? "#bdc3c7" : "#3498db"} />
-          </TouchableOpacity>
-          {/* Move Down Button */}
-          <TouchableOpacity 
-            onPress={() => onMoveDown?.(item.id)} 
-            disabled={totalQuestions !== undefined && displayIndex === totalQuestions - 1}
-            style={[styles.moveButton, (totalQuestions !== undefined && displayIndex === totalQuestions - 1) && styles.moveButtonDisabled]}
-          >
-            <Ionicons name="arrow-down-outline" size={22} color={(totalQuestions !== undefined && displayIndex === totalQuestions - 1) ? "#bdc3c7" : "#3498db"} />
-          </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => (isEditing ? handleSave() : setIsEditing(true))} 
-            style={styles.iconBtn}
+            style={styles.editSaveButton}
           >
             <Ionicons 
               name={isEditing ? "checkmark-circle" : "create-outline"} 
               size={22} 
-              color={isEditing ? "#2ecc71" : "#3498db"} 
+              color={isEditing ? "#2ecc71" : "#007bff"} 
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => onDelete(item.id)}>
@@ -166,7 +164,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 15, borderLeftWidth: 5, borderLeftColor: '#007bff', elevation: 2 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  actionButtons: { flexDirection: 'row' },
+  actionButtons: { flexDirection: 'row', alignItems: 'center' },
   iconBtn: { marginRight: 15 },
   qType: { fontSize: 10, fontWeight: 'bold', color: '#007bff', textTransform: 'uppercase' },
   questionText: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 12 },
@@ -187,4 +185,6 @@ const styles = StyleSheet.create({
   moveButtonDisabled: {
     opacity: 0.5,
   },
+  undoButtonWrapper: { marginRight: 10 },
+  editSaveButton: { marginRight: 10 },
 });
