@@ -7,7 +7,7 @@ import { Question } from '../../services/aiService';
 import { useExam } from '../../services/examContext';
 
 export default function ManualTab() {
-  const { questions, setQuestions } = useExam();
+  const { questions, setQuestions, moveQuestion, refreshVersion } = useExam();
 
   // 1. Function to delete questions
   const handleDelete = (id: string) => {
@@ -47,9 +47,12 @@ export default function ManualTab() {
             if (q.type === 'MCQ') {
               return (
                 <QuestionCard_MCQs 
-                  key={q.id} 
+                  key={`${q.id}-${refreshVersion}`} 
                   item={q} 
-                  displayIndex={index + 1} 
+                  displayIndex={index} 
+                  totalQuestions={questions.length}
+                  onMoveUp={(id) => moveQuestion(id, 'up')}
+                  onMoveDown={(id) => moveQuestion(id, 'down')}
                   onDelete={handleDelete}
                   onUpdate={handleUpdateQuestion} 
                 />
@@ -57,9 +60,12 @@ export default function ManualTab() {
             } else {
               return (
                 <QuestionCard_Structural 
-                  key={q.id} 
+                  key={`${q.id}-${refreshVersion}`} 
                   item={q} 
-                  displayIndex={index + 1} 
+                  displayIndex={index} 
+                  totalQuestions={questions.length}
+                  onMoveUp={(id) => moveQuestion(id, 'up')}
+                  onMoveDown={(id) => moveQuestion(id, 'down')}
                   onDelete={handleDelete}
                   onUpdate={handleUpdateQuestion} 
                 />

@@ -22,7 +22,9 @@ export default function QuickAiTab() {
     totalMarks, setTotalMarks, 
     logoUri, setLogoUri, 
     topic, setTopic, 
-    questions, setQuestions 
+    questions, setQuestions,
+    moveQuestion,
+    refreshVersion
   } = useExam();
 
   const [loading, setLoading] = useState(false);
@@ -106,17 +108,23 @@ export default function QuickAiTab() {
 
             return q.type === 'MCQ' ? (
               <QuestionCard_MCQs 
-                key={q.id} 
+                key={`${q.id}-${refreshVersion}`} 
                 item={q} 
-                displayIndex={index + 1} 
+                displayIndex={index} 
+                totalQuestions={questions.length}
+                onMoveUp={(id) => moveQuestion(id, 'up')}
+                onMoveDown={(id) => moveQuestion(id, 'down')}
                 onDelete={handleDelete}
                 onUpdate={handleUpdateQuestion} 
               />
             ) : (
               <QuestionCard_Structural 
-                key={q.id} 
+                key={`${q.id}-${refreshVersion}`} 
                 item={q} 
-                displayIndex={index + 1} 
+                displayIndex={index} 
+                totalQuestions={questions.length}
+                onMoveUp={(id) => moveQuestion(id, 'up')}
+                onMoveDown={(id) => moveQuestion(id, 'down')}
                 onDelete={handleDelete}
                 onUpdate={handleUpdateQuestion} 
               />

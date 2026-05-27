@@ -10,9 +10,12 @@ interface MCQProps {
   displayIndex: number;
   onDelete: (id: string) => void;
   onUpdate: (updatedQ: Question) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
+  totalQuestions?: number;
 }
 
-export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpdate }: MCQProps) {
+export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpdate, onMoveUp, onMoveDown, totalQuestions }: MCQProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(item?.question || "");
   // Ensure we have a valid array of strings
@@ -73,7 +76,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.qType}>Question {displayIndex} (MCQ)</Text>
+        <Text style={styles.qType}>Question {displayIndex + 1} (MCQ)</Text>
         <View style={styles.actionButtons}>
           <View style={{ marginRight: 15 }}>
             <UndoButton 
@@ -82,6 +85,22 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
               activeColor="#007bff"
             />
           </View>
+          {/* Move Up Button */}
+          <TouchableOpacity 
+            onPress={() => onMoveUp?.(item.id)} 
+            disabled={displayIndex === 0}
+            style={[styles.moveButton, displayIndex === 0 && styles.moveButtonDisabled]}
+          >
+            <Ionicons name="arrow-up-outline" size={22} color={displayIndex === 0 ? "#bdc3c7" : "#3498db"} />
+          </TouchableOpacity>
+          {/* Move Down Button */}
+          <TouchableOpacity 
+            onPress={() => onMoveDown?.(item.id)} 
+            disabled={totalQuestions !== undefined && displayIndex === totalQuestions - 1}
+            style={[styles.moveButton, (totalQuestions !== undefined && displayIndex === totalQuestions - 1) && styles.moveButtonDisabled]}
+          >
+            <Ionicons name="arrow-down-outline" size={22} color={(totalQuestions !== undefined && displayIndex === totalQuestions - 1) ? "#bdc3c7" : "#3498db"} />
+          </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => (isEditing ? handleSave() : setIsEditing(true))} 
             style={styles.iconBtn}
@@ -160,5 +179,12 @@ const styles = StyleSheet.create({
   optionRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   mathWrapper: { flex: 1, minHeight: 20, justifyContent: 'center' }, // Ensures the WebView has enough baseline space
   boldLabel: { fontWeight: 'bold', color: '#333' },
-  editForm: { paddingBottom: 10 }
+  editForm: { paddingBottom: 10 },
+  moveButton: {
+    marginRight: 10,
+    padding: 2,
+  },
+  moveButtonDisabled: {
+    opacity: 0.5,
+  },
 });

@@ -11,6 +11,9 @@ interface StructuralProps {
   displayIndex: number;
   onDelete: (id: string) => void;
   onUpdate: (updatedQ: Question) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
+  totalQuestions?: number;
 }
 
 /**
@@ -47,7 +50,7 @@ const gridToHTMLTable = (grid: string[][]): string => {
   return `<table>\n${rows}\n</table>`;
 };
 
-export default function QuestionCard_Structural({ item, displayIndex, onDelete, onUpdate }: StructuralProps) {
+export default function QuestionCard_Structural({ item, displayIndex, onDelete, onUpdate, onMoveUp, onMoveDown, totalQuestions }: StructuralProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(item?.question || "");
   const [editedSubs, setEditedSubs] = useState(item?.subQuestions || []);
@@ -162,7 +165,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
     <View style={styles.card}>
       {/* Header Panel */}
       <View style={styles.header}>
-        <Text style={styles.qType}>QUESTION {displayIndex}</Text>
+        <Text style={styles.qType}>Question {displayIndex + 1}</Text>
         <View style={{ flexDirection: 'row' }}>
           <View style={{ marginRight: 15 }}>
             <UndoButton 
@@ -170,6 +173,22 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
               onPress={handleUndo} 
             />
           </View>
+          {/* Move Up Button */}
+          <TouchableOpacity 
+            onPress={() => onMoveUp?.(item.id)} 
+            disabled={displayIndex === 0}
+            style={[styles.moveButton, displayIndex === 0 && styles.moveButtonDisabled]}
+          >
+            <Ionicons name="arrow-up-outline" size={22} color={displayIndex === 0 ? "#bdc3c7" : "#3498db"} />
+          </TouchableOpacity>
+          {/* Move Down Button */}
+          <TouchableOpacity 
+            onPress={() => onMoveDown?.(item.id)} 
+            disabled={totalQuestions !== undefined && displayIndex === totalQuestions - 1}
+            style={[styles.moveButton, (totalQuestions !== undefined && displayIndex === totalQuestions - 1) && styles.moveButtonDisabled]}
+          >
+            <Ionicons name="arrow-down-outline" size={22} color={(totalQuestions !== undefined && displayIndex === totalQuestions - 1) ? "#bdc3c7" : "#3498db"} />
+          </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => (isEditing ? handleSave() : enterEditMode())} // Call enterEditMode here
             style={{ marginRight: 15 }}
@@ -349,5 +368,12 @@ const styles = StyleSheet.create({
     flex: 1, 
     minHeight: 24, // Optimized height
     alignSelf: 'stretch' 
+  },
+  moveButton: {
+    marginRight: 10,
+    padding: 2,
+  },
+  moveButtonDisabled: {
+    opacity: 0.5,
   },
 });
