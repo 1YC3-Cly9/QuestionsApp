@@ -8,6 +8,9 @@ export interface Question {
   options?: string[];       
   subQuestions?: string[];  
   marks?: number;
+  images?: string[]; 
+  imageScales?: number[];
+  boxes?: number[][]; // [ymin, xmin, ymax, xmax] coordinates for cropping
 }
 
 // 2. CONFIGURATION
@@ -44,6 +47,7 @@ export const fetchQuestionsFromAI = async (
     4. Math: Wrap all formulas in single dollar signs $...$ and ensure backslashes are double-escaped for JSON (e.g., \\\\sin).
     5. Tables: If the question requires a table, use standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
     6. Ensure the content is strictly relevant to the topic and grade level.
+    7. If a diagram is described in text but not provided, do not hallucinate image URLs.
     7. Logic: Sub-parts must be logically dependent on or related to the main question text.
 
     Return ONLY a JSON object with a "questions" array:
@@ -53,7 +57,9 @@ export const fetchQuestionsFromAI = async (
         "type": "${type}",
         "question": "string",
         "options": ["Option A", "Option B", "Option C", "Option D"],
-        "subQuestions": ["Sub-part i", "Sub-part ii"]
+        "subQuestions": ["Sub-part i", "Sub-part ii"],
+        "images": [],
+        "imageScales": []
       }
     ]
   `;
@@ -70,9 +76,9 @@ export const fetchQuestionsFromAI = async (
     // Ensure we are mapping an array regardless of whether AI wrapped it in an object
     const questionsArray = Array.isArray(data) ? data : (data.questions || []);
 
-    return questionsArray.map((q: any) => ({
+    return questionsArray.map((q: any, idx: number) => ({
       ...q,
-      id: String(q.id || Math.random().toString(36).substring(2, 9)),
+      id: `gen-${Date.now()}-${idx}-${q.id || Math.random().toString(36).substring(2, 5)}`,
       options: Array.isArray(q.options) ? q.options : [],
       // Ensure subQuestions are always strings, even if AI returns objects
       subQuestions: Array.isArray(q.subQuestions)

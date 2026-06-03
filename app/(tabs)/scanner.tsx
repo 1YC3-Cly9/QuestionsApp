@@ -68,7 +68,7 @@ export default function ScannerTab() {
       for (const img of selectedImages) {
         const b64 = await getBase64(img.uri);
         if (b64) {
-          const res = await extractAllQuestionsFromImage(b64);
+          const res = await extractAllQuestionsFromImage(b64, img.uri);
           if (res && res.questions) {
             allExtracted = [...allExtracted, ...res.questions];
           }

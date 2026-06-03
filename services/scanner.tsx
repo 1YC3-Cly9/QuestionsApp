@@ -68,7 +68,7 @@ export default function ScannerTab() {
       const imageProcessingPromises = selectedImages.map(async (img) => {
         const base64Data = await getBase64(img.uri);
         if (base64Data) {
-          const result = await extractAllQuestionsFromImage(base64Data);
+          const result = await extractAllQuestionsFromImage(base64Data, img.uri);
           if (result && result.questions) {
             return result.questions;
           }

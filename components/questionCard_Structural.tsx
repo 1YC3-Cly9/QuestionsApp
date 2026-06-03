@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Question } from '../services/aiService';
+import { ImageRenderer } from './imageRenderer';
 import { MathRenderer } from './mathRenderer';
 import { UndoButton } from './undoButton';
 
@@ -260,7 +261,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
             // Extract text from object or fallback to string representation
             const displaySub = typeof sub === 'object' ? (sub.question || sub.text || JSON.stringify(sub)) : String(sub || "");
             return (
-              <View key={`edit-${item?.id || i}-${i}`} style={styles.dynamicRow}>
+              <View key={`edit-sub-${item.id}-${i}`} style={styles.dynamicRow}>
                 <Text style={{ width: 30, fontWeight: 'bold', color: '#2c3e50' }}>{romanNumerals[i] || i + 1}.</Text>
                 <TextInput 
                   style={[styles.optInput, { flex: 1 }]} 
@@ -288,6 +289,9 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
         <View style={styles.viewContainer}>
           {/* Main Question Display (Handles text, inline math, and scrollable tables) */}
           <MathRenderer content={item?.question} key={`main-${item?.id || 'default'}`} />
+
+          {/* Render Diagrams using the shared component */}
+          <ImageRenderer images={item?.images} imageScales={item?.imageScales} questionId={item.id} />
           
           {/* Sub-Questions Map Display */}
           {item?.subQuestions && Array.isArray(item.subQuestions) && item.subQuestions.length > 0 && (
@@ -298,7 +302,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
                 if (!subContent || subContent.trim() === "") return null;
                 
                 return (
-                  <View key={`subrow-${item?.id || i}-${i}`} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' }}>
+                  <View key={`view-sub-${item.id}-${i}`} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' }}>
                     <Text style={[styles.subRoman, { width: 35, fontWeight: 'bold', color: '#34495e' }]}>
                       ({romanNumerals[i] || i + 1})
                     </Text>
