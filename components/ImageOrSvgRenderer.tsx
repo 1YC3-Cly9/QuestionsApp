@@ -1,5 +1,6 @@
+import { Image } from 'expo-image';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { MathRenderer } from './mathRenderer';
 
 interface ImageOrSvgRendererProps {
@@ -50,7 +51,10 @@ export const ImageOrSvgRenderer: React.FC<ImageOrSvgRendererProps> = ({ content,
       ) : (
         <Image
           source={{ uri: content }}
-          style={[imageStyle, { opacity: isLoading ? 0 : 1 }]}
+          style={[
+            imageStyle, 
+            { opacity: isLoading ? 0 : 1, filter: 'grayscale(100%) contrast(150%)' }
+          ]}
           resizeMode="contain"
           onLoad={handleImageLoad}
           onError={handleImageError}

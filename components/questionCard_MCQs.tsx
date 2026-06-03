@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Question } from '../services/aiService';
 import { ImageRenderer } from './imageRenderer';
 import { MathRenderer } from './mathRenderer';
@@ -175,7 +176,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
           
           <Text style={styles.label}>Options:</Text>
           {editedOptions.map((opt, i) => (
-            <View key={`edit-opt-${item.id}-${i}`} style={styles.optionEditRow}>
+            <View key={i} style={styles.optionEditRow}>
               <Text style={styles.optionLabel}>{String.fromCharCode(65 + i)})</Text>
               <TextInput 
                 style={styles.optInput} 
@@ -190,7 +191,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
           {/* Render Question with Math Support */}
           <MathRenderer content={item?.question} key={`main-${item?.id || 'mcq'}`} />
           
-          {/* Render Diagrams using the shared component */}
+          {/* Render Diagrams using the standardized B&W component */}
           <ImageRenderer images={item?.images} imageScales={item?.imageScales} questionId={item.id} />
           
           <View style={styles.optionsList}>
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
   boldLabel: { fontWeight: 'bold', color: '#333' },
   editForm: { paddingBottom: 10 },
   displayImage: { width: '100%', height: 200, marginVertical: 10, borderRadius: 8 },
-  imageEditWrapper: { marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 10 },
+  imageEditWrapper: { marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee', pb: 10 },
   previewImage: { width: '100%', height: 120, borderRadius: 4 },
   imageControls: { marginTop: 5 },
   scaleRow: { flexDirection: 'row', alignItems: 'center' },

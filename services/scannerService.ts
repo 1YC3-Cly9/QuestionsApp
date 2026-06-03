@@ -113,7 +113,7 @@ export async function extractAllQuestionsFromImage(base64Image: string, imageUri
                   height: Math.max(1, Math.floor(((ymax - ymin) / 1000) * height)),
                 }
               }],
-              { base64: true }
+              { base64: true, compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
             );
             croppedImages.push(`data:image/jpeg;base64,${cropResult.base64}`);
           } catch (e) {
