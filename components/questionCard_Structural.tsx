@@ -17,11 +17,39 @@ interface StructuralProps {
   totalQuestions?: number;
 }
 
+const TABLE_REGEX = /<table[^>]*>[\s\S]*?<\/table>/gi;
+const TR_BLOCK_REGEX = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
+
+/**
+ * UTILITY: Extracts table HTML markup and plain question text separately.
+ * Handles <table...>, <tr>...</tr>, attributes, and case variations.
+ */
+const extractTableAndText = (fullText: string): { plainText: string; tableHtml: string | null } => {
+  if (!fullText) return { plainText: "", tableHtml: null };
+
+  const tableMatches = fullText.match(TABLE_REGEX);
+  if (tableMatches && tableMatches.length > 0) {
+    const tableHtml = tableMatches.join('\n');
+    const plainText = fullText.replace(TABLE_REGEX, "").trim();
+    return { plainText, tableHtml };
+  }
+
+  const trMatches = fullText.match(TR_BLOCK_REGEX);
+  if (trMatches && trMatches.length > 0) {
+    const tableHtml = `<table>\n${trMatches.join('\n')}\n</table>`;
+    const plainText = fullText.replace(TR_BLOCK_REGEX, "").trim();
+    return { plainText, tableHtml };
+  }
+
+  return { plainText: fullText.trim(), tableHtml: null };
+};
+
 /**
  * UTILITY: Parses a simple HTML table string into a 2D array of strings
  * Handles basic <table><tr><td>...</td></tr></table> structure.
  */
 const parseHTMLTableToGrid = (html: string): string[][] => {
+  if (!html) return [];
   const rows: string[][] = [];
   const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   const tdRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
@@ -32,8 +60,13 @@ const parseHTMLTableToGrid = (html: string): string[][] => {
     const cells: string[] = [];
     let tdMatch;
     while ((tdMatch = tdRegex.exec(rowContent)) !== null) {
-      // Remove <br> tags and trim whitespace
-      cells.push(tdMatch[1].replace(/<br\s*\/?>/gi, '\n').trim());
+      // Clean cell text
+      cells.push(
+        tdMatch[1]
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .trim()
+      );
     }
     if (cells.length > 0) rows.push(cells);
   }
@@ -119,23 +152,14 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
   // Function to prepare for editing
   const enterEditMode = () => {
     const questionText = item?.question || "";
-    const tableRegex = /<table>[\s\S]*?<\/table>/gi;
+    const { plainText, tableHtml } = extractTableAndText(questionText);
 
-    // Check if the question text contains an HTML table
-    if (questionText.includes('<table>')) {
-      const tableHtmlMatch = questionText.match(tableRegex);
-      if (tableHtmlMatch && tableHtmlMatch[0]) {
-        setTableGrid(parseHTMLTableToGrid(tableHtmlMatch[0]));
-        // Remove the table HTML from editedText so user only edits plain text
-        setEditedText(questionText.replace(tableHtmlMatch[0], '').trim());
-      } else {
-        setTableGrid([]);
-        setEditedText(questionText.trim());
-      }
+    if (tableHtml) {
+      setTableGrid(parseHTMLTableToGrid(tableHtml));
     } else {
       setTableGrid([]);
-      setEditedText(questionText.trim());
     }
+    setEditedText(plainText);
     setIsEditing(true);
   };
 
@@ -143,17 +167,14 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
   useEffect(() => {
     // Only update these when not actively editing to avoid jumping cursor or leaking tags
     if (!isEditing) {
-      const tableRegex = /<table>[\s\S]*?<\/table>/gi;
       const questionText = item?.question || "";
+      const { plainText, tableHtml } = extractTableAndText(questionText);
       
-      setEditedText(questionText.replace(tableRegex, "").trim());
+      setEditedText(plainText);
       setEditedSubs(item?.subQuestions || []);
       
-      if (questionText.includes('<table>')) {
-        const tableHtmlMatch = questionText.match(tableRegex);
-        if (tableHtmlMatch && tableHtmlMatch[0]) {
-          setTableGrid(parseHTMLTableToGrid(tableHtmlMatch[0]));
-        }
+      if (tableHtml) {
+        setTableGrid(parseHTMLTableToGrid(tableHtml));
       } else {
         setTableGrid([]);
       }

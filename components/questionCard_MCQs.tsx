@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Question } from '../services/aiService';
 import { ImageRenderer } from './imageRenderer';
 import { MathRenderer } from './mathRenderer';
@@ -18,22 +18,91 @@ interface MCQProps {
   totalQuestions?: number;
 }
 
+const TABLE_REGEX = /<table[^>]*>[\s\S]*?<\/table>/gi;
+const TR_BLOCK_REGEX = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
+
+/**
+ * UTILITY: Extracts table HTML markup and plain question text separately.
+ * Handles <table...>, <tr>...</tr>, attributes, and case variations.
+ */
+const extractTableAndText = (fullText: string): { plainText: string; tableHtml: string | null } => {
+  if (!fullText) return { plainText: "", tableHtml: null };
+
+  const tableMatches = fullText.match(TABLE_REGEX);
+  if (tableMatches && tableMatches.length > 0) {
+    const tableHtml = tableMatches.join('\n');
+    const plainText = fullText.replace(TABLE_REGEX, "").trim();
+    return { plainText, tableHtml };
+  }
+
+  const trMatches = fullText.match(TR_BLOCK_REGEX);
+  if (trMatches && trMatches.length > 0) {
+    const tableHtml = `<table>\n${trMatches.join('\n')}\n</table>`;
+    const plainText = fullText.replace(TR_BLOCK_REGEX, "").trim();
+    return { plainText, tableHtml };
+  }
+
+  return { plainText: fullText.trim(), tableHtml: null };
+};
+
+/**
+ * UTILITY: Parses an HTML table string into a 2D array of strings
+ */
+const parseHTMLTableToGrid = (html: string): string[][] => {
+  if (!html) return [];
+  const rows: string[][] = [];
+  const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  const tdRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+  
+  let trMatch;
+  while ((trMatch = trRegex.exec(html)) !== null) {
+    const rowContent = trMatch[1];
+    const cells: string[] = [];
+    let tdMatch;
+    while ((tdMatch = tdRegex.exec(rowContent)) !== null) {
+      cells.push(
+        tdMatch[1]
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .trim()
+      );
+    }
+    if (cells.length > 0) rows.push(cells);
+  }
+  return rows;
+};
+
+/**
+ * UTILITY: Rebuilds HTML table from a 2D grid of strings
+ */
+const gridToHTMLTable = (grid: string[][]): string => {
+  if (!grid || grid.length === 0) return "";
+  const rows = grid.map(row => 
+    `  <tr>${(row || []).map(cell => `<td>${cell || ""}</td>`).join('')}</tr>`
+  ).join('\n');
+  return `<table>\n${rows}\n</table>`;
+};
+
 export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpdate, onMoveUp, onMoveDown, totalQuestions }: MCQProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(item?.question || "");
-  // Ensure we have a valid array of strings
   const [editedOptions, setEditedOptions] = useState<string[]>(item?.options || []);
+  const [tableGrid, setTableGrid] = useState<string[][]>([]); // State for the visual table editor
   const [history, setHistory] = useState<Question[]>([]);
 
   // Multi-step dirty logic
   const isDirty = useMemo(() => {
     if (isEditing) {
-      return (editedText || "").trim() !== (item?.question || "").trim() || 
-             JSON.stringify(editedOptions) !== JSON.stringify(item?.options || []) ||
-             history.length > 0;
+      let currentTotalText = editedText;
+      if (tableGrid.length > 0) {
+        currentTotalText = ((editedText || "").trim() + "\n" + gridToHTMLTable(tableGrid)).trim();
+      }
+      const textChanged = (currentTotalText || "").trim() !== (item?.question || "").trim();
+      const optionsChanged = JSON.stringify(editedOptions) !== JSON.stringify(item?.options || []);
+      return textChanged || optionsChanged || history.length > 0;
     }
     return history.length > 0;
-  }, [isEditing, editedText, editedOptions, item?.question, item?.options, history]);
+  }, [isEditing, editedText, editedOptions, tableGrid, item?.question, item?.options, history]);
 
   const handleUpdateScale = (imgIdx: number, newScale: number) => {
     const newScales = [...(item.imageScales || [])];
@@ -56,25 +125,58 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
     }
   };
 
-  // Sync state if item changes (Fixes Stale State Bug)
+  // Prepare for edit mode
+  const enterEditMode = () => {
+    const questionText = item?.question || "";
+    const { plainText, tableHtml } = extractTableAndText(questionText);
+
+    if (tableHtml) {
+      setTableGrid(parseHTMLTableToGrid(tableHtml));
+    } else {
+      setTableGrid([]);
+    }
+    setEditedText(plainText);
+    setIsEditing(true);
+  };
+
+  // Sync state if item changes
   useEffect(() => {
-    setEditedText(item?.question || "");
-    setEditedOptions(item?.options || []);
-  }, [item]);
+    if (!isEditing) {
+      const questionText = item?.question || "";
+      const { plainText, tableHtml } = extractTableAndText(questionText);
+
+      setEditedText(plainText);
+      setEditedOptions(item?.options || []);
+      
+      if (tableHtml) {
+        setTableGrid(parseHTMLTableToGrid(tableHtml));
+      } else {
+        setTableGrid([]);
+      }
+    }
+  }, [item, isEditing]);
 
   const handleSave = useCallback(() => {
-    // Add current saved item to history before updating with new edits
-    if ((editedText || "").trim() !== (item?.question || "").trim() || JSON.stringify(editedOptions) !== JSON.stringify(item?.options || [])) {
+    let finalQuestionText = editedText;
+    if (tableGrid.length > 0) {
+      const newTableHtml = gridToHTMLTable(tableGrid);
+      finalQuestionText = ((editedText || "").trim() + "\n" + newTableHtml).trim();
+    }
+
+    const hasChanged = (finalQuestionText || "").trim() !== (item?.question || "").trim() ||
+                       JSON.stringify(editedOptions) !== JSON.stringify(item?.options || []);
+
+    if (hasChanged) {
       setHistory(prev => [...prev, item]);
     }
 
     onUpdate({ 
       ...item, 
-      question: editedText, 
+      question: finalQuestionText, 
       options: editedOptions 
     });
     setIsEditing(false);
-  }, [item, editedText, editedOptions, onUpdate]);
+  }, [item, editedText, editedOptions, tableGrid, onUpdate]);
 
   const updateOptionText = (text: string, index: number) => {
     const newOptions = [...editedOptions];
@@ -84,8 +186,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
 
   const handleUndo = () => {
     if (isEditing) {
-      setEditedText(item.question);
-      setEditedOptions(item.options || []);
+      enterEditMode();
       setIsEditing(false);
       return;
     }
@@ -124,7 +225,7 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
             />
           </View>
           <TouchableOpacity 
-            onPress={() => (isEditing ? handleSave() : setIsEditing(true))} 
+            onPress={() => (isEditing ? handleSave() : enterEditMode())} 
             style={styles.editSaveButton}
           >
             <Ionicons 
@@ -174,6 +275,47 @@ export default function QuestionCard_MCQs({ item, displayIndex, onDelete, onUpda
             multiline 
           />
           
+          {/* Visual Table Editor: Direct editing of cells */}
+          {tableGrid.length > 0 && (
+            <View style={styles.tableEditorContainer}>
+              <Text style={styles.label}>Edit Table (Swipe slider below to scroll):</Text>
+              <ScrollView style={{ maxHeight: 250 }}>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true} 
+                  persistentScrollbar={true}
+                  keyboardShouldPersistTaps="always"
+                >
+                  <View style={{ paddingBottom: 10 }}>
+                    {tableGrid.map((row, rowIndex) => (
+                      <View key={`row-${rowIndex}`} style={{ flexDirection: 'row' }}>
+                        {row.map((cell, colIndex) => (
+                          <TextInput
+                            key={`cell-${rowIndex}-${colIndex}`}
+                            style={[
+                              styles.tableCellInput,
+                              colIndex > 0 && { borderLeftWidth: 0 },
+                              rowIndex > 0 && { borderTopWidth: 0 },
+                            ]}
+                            value={cell}
+                            onChangeText={(text) => {
+                              const newGrid = [...tableGrid];
+                              newGrid[rowIndex] = [...newGrid[rowIndex]]; 
+                              newGrid[rowIndex][colIndex] = text;
+                              setTableGrid(newGrid);
+                            }}
+                          />
+                        ))}
+                      </View>
+                    ))}
+                    {/* Highlighted Slider Track */}
+                    <View style={styles.tableScrollSlider} />
+                  </View>
+                </ScrollView>
+              </ScrollView>
+            </View>
+          )}
+
           <Text style={styles.label}>Options:</Text>
           {editedOptions.map((opt, i) => (
             <View key={i} style={styles.optionEditRow}>
@@ -227,11 +369,11 @@ const styles = StyleSheet.create({
   optInput: { flex: 1, borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 3, fontSize: 14 },
   optionsList: { marginTop: 5 },
   optionRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-  mathWrapper: { flex: 1, minHeight: 20, justifyContent: 'center' }, // Ensures the WebView has enough baseline space
+  mathWrapper: { flex: 1, minHeight: 20, justifyContent: 'center' },
   boldLabel: { fontWeight: 'bold', color: '#333' },
   editForm: { paddingBottom: 10 },
   displayImage: { width: '100%', height: 200, marginVertical: 10, borderRadius: 8 },
-  imageEditWrapper: { marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee', pb: 10 },
+  imageEditWrapper: { marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 10 },
   previewImage: { width: '100%', height: 120, borderRadius: 4 },
   imageControls: { marginTop: 5 },
   scaleRow: { flexDirection: 'row', alignItems: 'center' },
@@ -249,4 +391,31 @@ const styles = StyleSheet.create({
   },
   undoButtonWrapper: { marginRight: 10 },
   editSaveButton: { marginRight: 10 },
+  tableEditorContainer: { 
+    marginVertical: 10, 
+    padding: 5, 
+    backgroundColor: '#f8f9fa', 
+    borderRadius: 4, 
+    borderWidth: 1, 
+    borderColor: '#ddd' 
+  },
+  tableCellInput: { 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    backgroundColor: '#fff', 
+    padding: 10, 
+    width: 110, 
+    textAlign: 'center', 
+    fontSize: 14,
+    minHeight: 48,
+    color: '#2c3e50'
+  },
+  tableScrollSlider: { 
+    height: 15, 
+    backgroundColor: '#bdc3c7', 
+    borderRadius: 7.5, 
+    marginTop: 15, 
+    width: '100%',
+    opacity: 0.8
+  },
 });
