@@ -10,27 +10,54 @@ import { Question } from './aiService'; // Import Question interface
  */
 const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY || '');
 
-export async function extractAllQuestionsFromImage(base64Image: string, imageUri: string): Promise<{ questions: Question[] }> {
+export async function extractAllQuestionsFromImage(
+  base64Image: string, 
+  imageUri: string, 
+  mode: 'question' | 'notes' = 'question',
+  difficulty?: 'Easy' | 'Medium' | 'Hard',
+  targetCount?: number,
+  questionType?: 'MCQ' | 'Structural'
+): Promise<{ questions: Question[] }> {
   if (!process.env.EXPO_PUBLIC_GEMINI_API_KEY) {
     throw new Error("API Configuration Error. Ensure your .env is set and Expo is restarted with 'npx expo start -c'");
   }
 
+  const roleInstruction = mode === 'notes'
+    ? `You are an expert educational AI. Analyze the provided study notes, textbook page, or summary document. Your task is to generate relevant, high-quality exam questions based on the key concepts, definitions, and formulas found in the notes.`
+    : `You are an expert exam scanner designed to extract questions from printed or handwritten exam papers.`;
+
+  const difficultyInstruction = (mode === 'notes' && difficulty)
+    ? `\n    9. Difficulty: Generate questions at the "${difficulty}" difficulty level.
+       - Easy: Basic recall, definitions, and simple calculations.
+       - Medium: Application of concepts, moderate problem-solving.
+       - Hard: Analysis, complex multi-step problems, and deeper reasoning.`
+    : '';
+
+  const countInstruction = (mode === 'notes' && targetCount && targetCount > 0)
+    ? `\n    ${difficulty ? '10' : '9'}. Question Count: Generate approximately ${targetCount} questions. Do not exceed this limit.`
+    : '';
+  
+  const typeInstruction = (mode === 'notes' && questionType)
+    ? `\n    11. Question Type: Generate ONLY "${questionType}" type questions.`
+    : '';
+
   const systemInstruction = `
-    You are an expert exam scanner designed to extract questions from printed or handwritten exam papers.
+    ${roleInstruction}
     Your output MUST be a strict JSON object with a single "questions" array.
     
     CRITICAL RULES:
-    1. Convert math to LaTeX wrapped in single dollar signs $...$.
+    1. NO DOCUMENT REFERENCES: Questions must be completely self-contained. It is forbidden to use phrases like "According to the text...", "Based on the provided notes...", or "As shown in the image...". The question must make sense on its own.
+    2. Convert math to LaTeX wrapped in single dollar signs $...$.
        IMPORTANT: All backslashes MUST be double-escaped for valid JSON (e.g., "\\\\tan", "\\\\frac", "\\\\equiv").
-    2. For MCQ: Use type: "MCQ", provide an "options" array, and leave "subQuestions" empty.
-    3. For Structural: Identify the main question stem. If a question has sub-parts (labeled i, ii, iii or a, b, c), group them into the "subQuestions" array. 
+    3. For MCQ: Use type: "MCQ", provide an "options" array, and leave "subQuestions" empty.
+    4. For Structural: Identify the main question stem. If a question has sub-parts (labeled i, ii, iii or a, b, c), group them into the "subQuestions" array. 
        The main "question" field should contain the introductory text, and sub-parts MUST NOT be treated as separate top-level questions.
-    4. Tables: If the image contains tabular data, format it using standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
-    5. Diagrams: If a question has a diagram, figure, or chart, provide its location in a "boxes" array.
+    5. Tables: If the image contains tabular data, format it using standard HTML <table> tags (e.g., <table><tr><td>...</td></tr></table>). Ensure no newlines within table cells.
+    6. Diagrams: If a question has a diagram, figure, or chart, provide its location in a "boxes" array.
        Each box MUST be [ymin, xmin, ymax, xmax] normalized to a 0-1000 scale.
-    6. Generate a unique string 'id' for each question.
-    7. Do NOT include question numbers (e.g., "1.") in the question text.
-    8. Hierarchy: Maintain the logical structure of the exam paper. Parts of a question belong to the question that preceded them.
+    7. Generate a unique string 'id' for each question.
+    8. Do NOT include question numbers (e.g., "1.") in the question text.
+    9. Hierarchy: Maintain the logical structure of the exam paper or notes.${difficultyInstruction}${countInstruction}${typeInstruction}
 
     JSON Output Format:
     {
@@ -63,6 +90,12 @@ export async function extractAllQuestionsFromImage(base64Image: string, imageUri
       }
     });
 
+    const countHint = (mode === 'notes' && targetCount) ? ` Generate approximately ${targetCount} questions.` : '';
+    const difficultyHint = (mode === 'notes' && difficulty) ? ` Target difficulty: ${difficulty}.` : '';
+    const promptText = mode === 'notes' 
+      ? `Analyze these study notes and extract or generate all relevant exam questions into the specified JSON format.${difficultyHint}${countHint}`
+      : "Extract all questions from this exam image into the specified JSON format.";
+
     const result = await model.generateContent([
       {
         inlineData: {
@@ -70,7 +103,7 @@ export async function extractAllQuestionsFromImage(base64Image: string, imageUri
           data: base64Image
         }
       },
-      { text: "Extract all questions from this exam image into the specified JSON format." }
+      { text: promptText }
     ]);
 
     const response = await result.response;

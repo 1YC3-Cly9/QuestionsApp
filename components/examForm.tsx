@@ -55,14 +55,19 @@ export default function examForm({ data, setters, onGenerate, isLoading }: ExamF
             onChangeText={(txt) => setters.setCount(parseInt(txt) || 0)} 
           />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1.5 }}>
           <Text style={styles.label}>Difficulty</Text>
-          <TouchableOpacity 
-            style={styles.input} 
-            onPress={() => setters.setDifficulty(data.difficulty === 'Easy' ? 'Hard' : 'Easy')}
-          >
-            <Text>{data.difficulty}</Text>
-          </TouchableOpacity>
+          <View style={styles.difficultyRow}>
+            {(['Easy', 'Medium', 'Hard'] as const).map((level) => (
+              <TouchableOpacity
+                key={level}
+                style={[styles.difficultyBtn, data.difficulty === level && styles.difficultyBtnActive]}
+                onPress={() => setters.setDifficulty(level)}
+              >
+                <Text style={data.difficulty === level ? styles.activeText : styles.btnText}>{level}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </View>
 
@@ -87,6 +92,9 @@ const styles = StyleSheet.create({
   activeText: { color: '#fff', fontWeight: 'bold' },
   input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#eee', marginBottom: 10 },
   row: { flexDirection: 'row' },
+  difficultyRow: { flexDirection: 'row', backgroundColor: '#f0f0f0', borderRadius: 8, padding: 3, marginBottom: 10 },
+  difficultyBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 6 },
+  difficultyBtnActive: { backgroundColor: '#007bff' },
   genBtn: { backgroundColor: '#007bff', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
   genBtnText: { color: '#fff', fontWeight: 'bold' }
 });
