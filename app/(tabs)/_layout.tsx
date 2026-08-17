@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { Tabs } from 'expo-router';
-import { View, Text, TouchableOpacity, SafeAreaView, Animated, Easing, Dimensions, Modal } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { Animated, Dimensions, Easing, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 // 1. SERVICES & CONTEXT
 import { useExam } from '../../services/examContext';
@@ -18,21 +18,24 @@ import SideDrawer from '../../components/header/sideDrawer';
 const { width } = Dimensions.get('window');
 
 export default function TabLayout() {
-  const { schoolName, className, totalMarks, logoUri, questions } = useExam();
+  const { schoolName, className, totalMarks, logoUri, topic, questions, themeName } = useExam();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const slideAnim = useRef(new Animated.Value(-width)).current; 
 
   const isActive = questions.length > 0;
 
-  const toggleDrawer = (open: boolean) => {
+  const toggleDrawer = (open: boolean, callback?: () => void) => {
     if (open) setIsDrawerOpen(true);
     Animated.timing(slideAnim, {
       toValue: open ? 0 : -width,
       duration: 300,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: true,
-    }).start(() => { if (!open) setIsDrawerOpen(false); });
+    }).start(() => { 
+      if (!open) setIsDrawerOpen(false); 
+      callback?.(); // Execute the callback after animation completes
+    });
   };
 
   return (
@@ -53,7 +56,7 @@ export default function TabLayout() {
         <ActionButtons 
           isActive={isActive} 
           onPreview={() => setShowPreview(true)} 
-          onExport={() => generateExamPDF(schoolName, className, totalMarks, logoUri, questions)} 
+          onExport={() => generateExamPDF(themeName, schoolName, className, totalMarks, logoUri, topic, questions)} 
         />
       </View>
 
@@ -68,7 +71,11 @@ export default function TabLayout() {
       </Tabs>
 
       {/* MODULAR DRAWER */}
-      <SideDrawer isOpen={isDrawerOpen} slideAnim={slideAnim} onClose={() => toggleDrawer(false)} />
+      <SideDrawer 
+        isOpen={isDrawerOpen} 
+        slideAnim={slideAnim} 
+        onClose={(callback) => toggleDrawer(false, callback)}
+      />
 
       {/* PREVIEW MODAL */}
       <Modal visible={showPreview} animationType="slide">
@@ -79,7 +86,7 @@ export default function TabLayout() {
               <Ionicons name="close-circle" size={32} color="#e74c3c" />
             </TouchableOpacity>
           </View>
-          <WebView source={{ html: getExamHtmlContent(schoolName, className, totalMarks, logoUri, questions) }} />
+          <WebView source={{ html: getExamHtmlContent(themeName, schoolName, className, totalMarks, logoUri, topic, questions) }} />
         </SafeAreaView>
       </Modal>
 

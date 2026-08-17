@@ -14,6 +14,8 @@ interface ExamContextType {
   setLogoUri: (value: string) => void;
   topic: string;
   setTopic: (value: string) => void;
+  themeName: string;
+  setThemeName: (value: string) => void;
   questions: Question[];
   setQuestions: (value: Question[]) => void;
   refreshVersion: number;
@@ -39,6 +41,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   const [totalMarks, setTotalMarks] = useState('');
   const [logoUri, setLogoUri] = useState('');
   const [topic, setTopic] = useState('');
+  const [themeName, setThemeName] = useState('classic'); // Default theme
   const [questions, setQuestions] = useState<Question[]>([]);
   const [refreshVersion, setRefreshVersion] = useState(0);
 
@@ -78,6 +81,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     setTotalMarks('');
     setLogoUri('');
     setTopic('');
+    setThemeName('classic');
     setQuestions([]);
   };
 
@@ -88,6 +92,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       totalMarks, setTotalMarks,
       logoUri, setLogoUri,
       topic, setTopic,
+      themeName, setThemeName,
       questions, setQuestions,
       refreshVersion,
       moveQuestion,
