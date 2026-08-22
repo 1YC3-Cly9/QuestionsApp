@@ -6,7 +6,8 @@ import { WebView } from 'react-native-webview';
 
 // 1. SERVICES & CONTEXT
 import { useExam } from '../../services/examContext';
-import { generateExamPDF, getExamHtmlContent } from '../../services/pdfGenerator';
+import { getExamHtmlContent } from '../../services/pdfGenerator';
+import { generateExamPDF } from '../../services/pdfServices';
 
 // 2. EXTERNAL STYLES (The new way)
 import { layoutStyles as styles } from '../../styles/layoutStyles';
@@ -18,7 +19,7 @@ import SideDrawer from '../../components/header/sideDrawer';
 const { width } = Dimensions.get('window');
 
 export default function TabLayout() {
-  const { schoolName, className, totalMarks, logoUri, topic, questions, themeName } = useExam();
+  const { schoolName, className, date, totalMarks, logoUri, topic, sectionTitle, showSectionRule, sectionRule, sectionStart, sectionEnd, sections, questions, themeName } = useExam();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const slideAnim = useRef(new Animated.Value(-width)).current; 
@@ -56,7 +57,7 @@ export default function TabLayout() {
         <ActionButtons 
           isActive={isActive} 
           onPreview={() => setShowPreview(true)} 
-          onExport={() => generateExamPDF(themeName, schoolName, className, totalMarks, logoUri, topic, questions)} 
+          onExport={() => generateExamPDF(themeName, schoolName, className, date, totalMarks, logoUri, topic, sectionTitle, showSectionRule, sectionRule, sectionStart, sectionEnd, sections, questions)} 
         />
       </View>
 
@@ -86,7 +87,7 @@ export default function TabLayout() {
               <Ionicons name="close-circle" size={32} color="#e74c3c" />
             </TouchableOpacity>
           </View>
-          <WebView source={{ html: getExamHtmlContent(themeName, schoolName, className, totalMarks, logoUri, topic, questions) }} />
+          <WebView source={{ html: getExamHtmlContent(themeName, schoolName, className, date, totalMarks, logoUri, topic, sectionTitle, showSectionRule, sectionRule, sectionStart, sectionEnd, sections, questions) }} />
         </SafeAreaView>
       </Modal>
 

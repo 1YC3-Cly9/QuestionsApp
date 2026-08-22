@@ -14,11 +14,13 @@ import ExamForm from '../../components/examForm';
 import QuestionCard_MCQs from '../../components/questionCard_MCQs';
 import QuestionCard_Structural from '../../components/questionCard_Structural';
 import SchoolDetails from '../../components/schoolDetails';
+import SectionManager from '../../components/SectionManager';
 
 export default function QuickAiTab() {
   const { 
     schoolName, setSchoolName, 
     className, setClassName, 
+    date, setDate,
     totalMarks, setTotalMarks, 
     logoUri, setLogoUri, 
     topic, setTopic, 
@@ -26,6 +28,7 @@ export default function QuickAiTab() {
     moveQuestion,
     refreshVersion
   } = useExam();
+  const { sections, setSections } = useExam();
 
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(5);
@@ -89,8 +92,8 @@ export default function QuickAiTab() {
         
         {/* HEADER & FORM SECTION */}
         <SchoolDetails 
-          data={{ schoolName, className, totalMarks, logoUri }} 
-          setters={{ setSchoolName, setClassName, setTotalMarks }} 
+          data={{ schoolName, className, date, totalMarks, logoUri }} 
+          setters={{ setSchoolName, setClassName, setDate, setTotalMarks }} 
           onPickImage={handlePickImage}
         />
         
@@ -99,6 +102,12 @@ export default function QuickAiTab() {
           setters={{ setTopic, setCount, setType, setDifficulty }} 
           onGenerate={handleGenerate} 
           isLoading={loading} 
+        />
+
+        <SectionManager
+          sections={sections}
+          setSections={setSections}
+          questionCount={questions.length}
         />
 
         {/* QUESTIONS LIST SECTION */}
