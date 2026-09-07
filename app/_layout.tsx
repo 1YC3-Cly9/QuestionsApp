@@ -1,8 +1,9 @@
-import { Stack } from 'expo-router';
-import { View, StyleSheet, Platform } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ExamProvider } from '../services/examContext';
 
@@ -13,9 +14,6 @@ export default function RootLayout() {
       if (Platform.OS === 'android') {
         // Hides the bottom navigation bar
         await NavigationBar.setVisibilityAsync('hidden');
-        
-        // FIXED: Using the string as a literal type to satisfy TypeScript
-        await NavigationBar.setBehaviorAsync('sticky-immersive' as NavigationBar.NavigationBarBehavior);
       }
     };
 
@@ -23,16 +21,18 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ExamProvider>
-      <View style={styles.container}>
+    <SafeAreaProvider>
+      <ExamProvider>
+        <View style={styles.container}>
         {/* hidden={true} removes the clock/battery bar at the top */}
         <StatusBar hidden={true} />
         
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
-      </View>
-    </ExamProvider>
+        </View>
+      </ExamProvider>
+    </SafeAreaProvider>
   );
 }
 

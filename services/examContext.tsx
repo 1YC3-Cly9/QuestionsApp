@@ -1,5 +1,4 @@
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { LayoutAnimation, Platform, UIManager } from 'react-native';
+import { createContext, ReactNode, useContext, useState } from 'react';
 import { Question } from './aiService';
 
 export interface ExamSection {
@@ -52,12 +51,6 @@ const ExamContext = createContext<ExamContextType | undefined>(undefined);
 
 // 3. Create the Provider that wraps the app
 export function ExamProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
-
   const [schoolName, setSchoolName] = useState('');
   const [className, setClassName] = useState('');
   const [date, setDate] = useState('');
@@ -88,9 +81,6 @@ export function ExamProvider({ children }: { children: ReactNode }) {
    * Moves a question up or down in the list.
    */
   const moveQuestion = (id: string, direction: 'up' | 'down') => {
-    // Methodology: LayoutAnimation forces the UI thread to re-sync layout positions
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    
     setQuestions((prev) => {
       const index = prev.findIndex((q) => q.id === id);
       if (index === -1) return prev;
