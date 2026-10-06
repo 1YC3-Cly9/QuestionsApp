@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Animated, Dimensions, Easing, Modal, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -11,6 +11,7 @@ import { getExamHtmlContent } from '../../services/pdfGenerator';
 import { generateExamPDF } from '../../services/pdfServices';
 
 // 2. EXTERNAL STYLES (The new way)
+import { tabLayoutInlineStyles as inlineStyles } from '../../styles/appStyles';
 import { layoutStyles as styles } from '../../styles/layoutStyles';
 
 // 3. COMPONENTS
@@ -23,7 +24,7 @@ export default function TabLayout() {
   const { schoolName, className, date, totalMarks, logoUri, topic, sectionTitle, showSectionRule, sectionRule, sectionStart, sectionEnd, sections, questions, themeName } = useExam();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-width)).current; 
+  const [slideAnim] = useState(() => new Animated.Value(-width));
 
   const isActive = questions.length > 0;
 
@@ -41,12 +42,12 @@ export default function TabLayout() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={inlineStyles.rootSafeArea}>
       
       {/* STATIC HEADER BAR */}
       <View style={styles.staticBar}>
         <View style={styles.barLeft}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={inlineStyles.headerBrandRow}>
             <TouchableOpacity onPress={() => toggleDrawer(true)} style={styles.menuTrigger}>
               <Ionicons name="ellipsis-vertical" size={24} color="#2c3e50" />
             </TouchableOpacity>
@@ -81,7 +82,7 @@ export default function TabLayout() {
 
       {/* PREVIEW MODAL */}
       <Modal visible={showPreview} animationType="slide">
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={inlineStyles.previewSafeArea}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Exam Preview</Text>
             <TouchableOpacity onPress={() => setShowPreview(false)}>

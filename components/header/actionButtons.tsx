@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity, View } from 'react-native';
+import { actionButtonStyles as styles } from '../../styles/appStyles';
 
 interface ActionButtonsProps {
   isActive: boolean;
@@ -23,7 +23,7 @@ export default function ActionButtons({ isActive, onPreview, onExport }: ActionB
       {/* Export Button */}
       <TouchableOpacity 
         disabled={!isActive}
-        style={[styles.btn, { backgroundColor: isActive ? '#2ecc71' : '#dfe6e9', marginLeft: 10 }]} 
+        style={[styles.btn, styles.exportBtn, { backgroundColor: isActive ? '#2ecc71' : '#dfe6e9' }]} 
         onPress={onExport}
       >
         <Ionicons name="cloud-download-outline" size={20} color={isActive ? "#fff" : "#b2bec3"} />
@@ -32,7 +32,3 @@ export default function ActionButtons({ isActive, onPreview, onExport }: ActionB
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-end' },
-  btn: { padding: 10, borderRadius: 12, elevation: 2 }
-});

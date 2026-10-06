@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ExamSection } from '../services/examContext';
+import { sectionItemStyles as styles } from '../styles/sectionStyles';
 
 interface SectionItemProps {
   section: ExamSection;
@@ -43,17 +43,3 @@ export default function SectionItem({ section, index, canRemove, onChange, onRem
   );
 }
 
-const styles = StyleSheet.create({
-  sectionBlock: { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 10, marginTop: 4 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionNumber: { color: '#636e72', fontWeight: '600', marginBottom: 8 },
-  input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#eee', marginBottom: 10 },
-  rangeRow: { flexDirection: 'row', gap: 10 },
-  rangeInput: { flex: 1 },
-  ruleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
-  ruleButton: { width: 36, height: 32, borderWidth: 1, borderColor: '#b2bec3', borderRadius: 6, marginLeft: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f2f6' },
-  ruleButtonActive: { backgroundColor: '#007bff', borderColor: '#007bff' },
-  ruleButtonText: { color: '#636e72', fontSize: 20, lineHeight: 20 },
-  ruleButtonTextActive: { color: '#fff' },
-  ruleText: { color: '#636e72', flex: 1 },
-});

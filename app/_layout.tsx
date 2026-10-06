@@ -2,10 +2,11 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ExamProvider } from '../services/examContext';
+import { rootStyles as styles } from '../styles/appStyles';
 
 export default function RootLayout() {
   
@@ -36,9 +37,3 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f4f7f6',
-  },
-});

@@ -7,6 +7,7 @@ import { fetchQuestionsFromAI, Question } from '../../services/aiService';
 import { useExam } from '../../services/examContext';
 
 // 2. EXTERNAL STYLES
+import { tabLayoutInlineStyles as inlineStyles } from '../../styles/appStyles';
 import { screenStyles as styles } from '../../styles/screenStyles';
 
 // 3. COMPONENTS
@@ -54,7 +55,7 @@ export default function QuickAiTab() {
     try {
       const newQs = await fetchQuestionsFromAI(topic, count, difficulty, type, className);
       setQuestions([...questions, ...newQs]);
-    } catch (e) { 
+    } catch { 
       Alert.alert("Error", "Failed to generate."); 
     } finally { 
       setLoading(false); 
@@ -79,7 +80,7 @@ export default function QuickAiTab() {
 
   return (
     <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+      style={inlineStyles.tabScreen}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 130 : 80}
     >

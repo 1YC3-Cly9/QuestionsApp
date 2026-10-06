@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
-import { Animated, Dimensions, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { sideDrawerStyles as styles } from '../../styles/appStyles';
 
 const { width } = Dimensions.get('window');
 
@@ -50,22 +50,3 @@ export default function SideDrawer({ isOpen, slideAnim, onClose }: SideDrawerPro
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 99 },
-  drawer: {
-    position: 'absolute', left: 0, top: 0, bottom: 0, width: width * 0.75,
-    backgroundColor: '#fff', zIndex: 100, padding: 25, paddingTop: 60,
-    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 10,
-  },
-  profileSection: { alignItems: 'center', marginBottom: 30, borderBottomWidth: 1, borderColor: '#f0f0f0', paddingBottom: 25 },
-  avatarCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#e8f4fd', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  userName: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
-  userRole: { fontSize: 13, color: '#95a5a6' },
-  menu: { flex: 1 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15 },
-  menuText: { fontSize: 16, marginLeft: 15, color: '#2c3e50', fontWeight: '500' },
-  logoutItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, marginTop: 'auto', borderTopWidth: 1, borderColor: '#eee' },
-  logoutText: { fontSize: 16, marginLeft: 15, color: '#e74c3c', fontWeight: 'bold' },
-  version: { textAlign: 'center', color: '#bdc3c7', fontSize: 10, marginTop: 10 }
-});

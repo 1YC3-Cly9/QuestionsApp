@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { MathRenderer } from './mathRenderer';
 
@@ -10,23 +10,16 @@ interface ImageOrSvgRendererProps {
 }
 
 export const ImageOrSvgRenderer: React.FC<ImageOrSvgRendererProps> = ({ content, imageStyle, minHeight = 180 }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedContent, setLoadedContent] = useState('');
   const isSvg = content.trim().toLowerCase().startsWith('<svg');
-
-  useEffect(() => {
-    setIsLoading(true); // Reset loading state when content changes
-    // If content is empty, no loading is needed
-    if (!content) {
-      setIsLoading(false);
-    }
-  }, [content]);
+  const isLoading = Boolean(content) && loadedContent !== content;
 
   const handleImageLoad = () => {
-    setIsLoading(false);
+    setLoadedContent(content);
   };
 
   const handleImageError = (error: any) => {
-    setIsLoading(false);
+    setLoadedContent(content);
     console.error("Image failed to load:", error.nativeEvent.error);
   };
 

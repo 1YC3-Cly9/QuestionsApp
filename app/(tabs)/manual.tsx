@@ -1,10 +1,10 @@
-import React from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import ManualEntry from '../../components/manualEntry';
 import QuestionCard_MCQs from '../../components/questionCard_MCQs';
 import QuestionCard_Structural from '../../components/questionCard_Structural';
 import { Question } from '../../services/aiService';
 import { useExam } from '../../services/examContext';
+import { tabLayoutInlineStyles as inlineStyles, manualScreenStyles as styles } from '../../styles/appStyles';
 
 export default function ManualTab() {
   const { questions, setQuestions, moveQuestion, refreshVersion } = useExam();
@@ -24,7 +24,7 @@ export default function ManualTab() {
 
   return (
     <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+      style={inlineStyles.tabScreen} 
       behavior={Platform.OS === "ios" ? "padding" : "height"} 
       keyboardVerticalOffset={Platform.OS === "ios" ? 130 : 80} 
     >
@@ -78,22 +78,3 @@ export default function ManualTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f4f7f6' 
-  },
-  scrollContent: { 
-    padding: 15 
-  },
-  title: { 
-    fontSize: 22, 
-    fontWeight: 'bold', 
-    marginBottom: 20,
-    color: '#2c3e50'
-  },
-  listContainer: {
-    marginTop: 20,
-    paddingBottom: 40
-  }
-});

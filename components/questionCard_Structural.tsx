@@ -1,10 +1,11 @@
 // components/QuestionCard_Structural.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Question } from '../services/aiService';
+import { structuralQuestionCardStyles as styles } from '../styles/questionCardStyles';
 import { ImageRenderer } from './imageRenderer';
-import { MathRenderer } from './mathRenderer';
+import { extractTableAndText, gridToHTMLTable, MathRenderer, parseHTMLTableToGrid, TableEditor } from './mathRenderer';
 import { UndoButton } from './undoButton';
 
 interface StructuralProps {
@@ -17,72 +18,6 @@ interface StructuralProps {
   totalQuestions?: number;
 }
 
-const TABLE_REGEX = /<table[^>]*>[\s\S]*?<\/table>/gi;
-const TR_BLOCK_REGEX = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
-
-/**
- * UTILITY: Extracts table HTML markup and plain question text separately.
- * Handles <table...>, <tr>...</tr>, attributes, and case variations.
- */
-const extractTableAndText = (fullText: string): { plainText: string; tableHtml: string | null } => {
-  if (!fullText) return { plainText: "", tableHtml: null };
-
-  const tableMatches = fullText.match(TABLE_REGEX);
-  if (tableMatches && tableMatches.length > 0) {
-    const tableHtml = tableMatches.join('\n');
-    const plainText = fullText.replace(TABLE_REGEX, "").trim();
-    return { plainText, tableHtml };
-  }
-
-  const trMatches = fullText.match(TR_BLOCK_REGEX);
-  if (trMatches && trMatches.length > 0) {
-    const tableHtml = `<table>\n${trMatches.join('\n')}\n</table>`;
-    const plainText = fullText.replace(TR_BLOCK_REGEX, "").trim();
-    return { plainText, tableHtml };
-  }
-
-  return { plainText: fullText.trim(), tableHtml: null };
-};
-
-/**
- * UTILITY: Parses a simple HTML table string into a 2D array of strings
- * Handles basic <table><tr><td>...</td></tr></table> structure.
- */
-const parseHTMLTableToGrid = (html: string): string[][] => {
-  if (!html) return [];
-  const rows: string[][] = [];
-  const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-  const tdRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
-  
-  let trMatch;
-  while ((trMatch = trRegex.exec(html)) !== null) {
-    const rowContent = trMatch[1];
-    const cells: string[] = [];
-    let tdMatch;
-    while ((tdMatch = tdRegex.exec(rowContent)) !== null) {
-      // Clean cell text
-      cells.push(
-        tdMatch[1]
-          .replace(/<br\s*\/?>/gi, '\n')
-          .replace(/<[^>]+>/g, '')
-          .trim()
-      );
-    }
-    if (cells.length > 0) rows.push(cells);
-  }
-  return rows;
-};
-
-/**
- * UTILITY: Rebuilds HTML table from a 2D grid of strings
- */
-const gridToHTMLTable = (grid: string[][]): string => {
-  if (!grid || grid.length === 0) return "";
-  const rows = grid.map(row => 
-    `  <tr>${(row || []).map(cell => `<td>${cell || ""}</td>`).join('')}</tr>`
-  ).join('\n');
-  return `<table>\n${rows}\n</table>`;
-};
 
 export default function QuestionCard_Structural({ item, displayIndex, onDelete, onUpdate, onMoveUp, onMoveDown, totalQuestions }: StructuralProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -164,6 +99,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
   };
 
   // Sync state if item changes (Fixes Stale State Bug)
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Only update these when not actively editing to avoid jumping cursor or leaking tags
     if (!isEditing) {
@@ -180,6 +116,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
       }
     }
   }, [item, isEditing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'];
 
@@ -237,45 +174,7 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
           />
 
           {/* Visual Table Editor: Direct editing of cells */}
-          {tableGrid.length > 0 && (
-            <View style={styles.tableEditorContainer}>
-              <Text style={styles.label}>Edit Table (Swipe slider below to scroll):</Text>
-              <ScrollView style={{ maxHeight: 250 }}>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={true} 
-                  persistentScrollbar={true}
-                  keyboardShouldPersistTaps="always"
-                >
-                  <View style={{ paddingBottom: 10 }}>
-                    {tableGrid.map((row, rowIndex) => (
-                      <View key={`row-${rowIndex}`} style={{ flexDirection: 'row' }}>
-                        {row.map((cell, colIndex) => (
-                          <TextInput
-                            key={`cell-${rowIndex}-${colIndex}`}
-                            style={[
-                              styles.tableCellInput,
-                              colIndex > 0 && { borderLeftWidth: 0 },
-                              rowIndex > 0 && { borderTopWidth: 0 },
-                            ]}
-                            value={cell}
-                            onChangeText={(text) => {
-                              const newGrid = [...tableGrid];
-                              newGrid[rowIndex] = [...newGrid[rowIndex]]; 
-                              newGrid[rowIndex][colIndex] = text;
-                              setTableGrid(newGrid);
-                            }}
-                          />
-                        ))}
-                      </View>
-                    ))}
-                    {/* Highlighted Slider Track */}
-                    <View style={styles.tableScrollSlider} />
-                  </View>
-                </ScrollView>
-              </ScrollView>
-            </View>
-          )}
+          <TableEditor grid={tableGrid} onChange={setTableGrid} />
 
           <Text style={styles.label}>Sub-Questions:</Text>
           {Array.isArray(editedSubs) && editedSubs.map((sub: any, i: number) => {
@@ -341,73 +240,3 @@ export default function QuestionCard_Structural({ item, displayIndex, onDelete, 
   );
 }
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 15, borderLeftWidth: 5, borderLeftColor: '#f39c12', elevation: 2 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  qType: { fontSize: 10, fontWeight: 'bold', color: '#e67e22', textTransform: 'uppercase' },
-  input: { borderBottomWidth: 1, borderBottomColor: '#f39c12', paddingVertical: 5, fontSize: 16, color: '#2c3e50', marginBottom: 10 },
-  optInput: { flex: 1, borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 3, fontSize: 14, marginBottom: 8 },
-  label: { fontSize: 10, color: '#999', marginBottom: 5, marginTop: 10, fontWeight: 'bold' },
-  tableEditorContainer: { 
-    marginVertical: 10, 
-    padding: 5, 
-    backgroundColor: '#f8f9fa', 
-    borderRadius: 4, 
-    borderWidth: 1, 
-    borderColor: '#ddd' 
-  },
-  tableCellInput: { 
-    borderWidth: 1, 
-    borderColor: '#ddd', 
-    backgroundColor: '#fff', 
-    padding: 10, 
-    width: 110, 
-    textAlign: 'center', 
-    fontSize: 14,
-    minHeight: 48,
-    color: '#2c3e50'
-  },
-  tableScrollSlider: { 
-    height: 15, // Increased height for better visibility
-    backgroundColor: '#bdc3c7', 
-    borderRadius: 7.5, 
-    marginTop: 15, 
-    width: '100%',
-    opacity: 0.8
-  },
-  dynamicRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 10, alignSelf: 'flex-start' },
-  addBtnText: { color: '#27ae60', fontWeight: 'bold', marginLeft: 5 },
-  viewContainer: { 
-    paddingVertical: 5,
-    flexDirection: 'column'
-  },
-  subRow: { 
-    flexDirection: 'row', 
-    alignItems: 'flex-start', 
-    marginBottom: 8
-  },
-  subRoman: { marginRight: 5, fontSize: 14, color: '#555' },
-  mathWrapper: { 
-    flex: 1, 
-    minHeight: 24, // Optimized height
-    alignSelf: 'stretch' 
-  },
-  moveButton: {
-    marginRight: 10,
-    padding: 2,
-  },
-  moveButtonDisabled: {
-    opacity: 0.5,
-  },
-  actionButtons: { // New style to group and align action buttons
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  undoButtonWrapper: { // Wrapper for UndoButton to apply consistent margin
-    marginRight: 10,
-  },
-  editSaveButton: { // Style for Edit/Save button
-    marginRight: 10,
-  },
-});

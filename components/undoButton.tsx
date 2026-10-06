@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
+import { undoButtonStyles as styles } from '../styles/featureStyles';
 
 interface UndoButtonProps {
   onPress: () => void;
@@ -14,7 +15,7 @@ export const UndoButton: React.FC<UndoButtonProps> = ({ onPress, isDirty, disabl
     <TouchableOpacity 
       onPress={onPress} 
       disabled={disabled || !isDirty}
-      style={{ opacity: isDirty ? 1 : 0.5 }}
+      style={[styles.button, { opacity: isDirty ? 1 : 0.5 }]}
     >
       <Ionicons 
         name="arrow-undo-outline" 

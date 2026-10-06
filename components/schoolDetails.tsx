@@ -1,6 +1,7 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import React, { useState } from 'react';
-import { Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { schoolDetailsStyles as styles } from '../styles/featureStyles';
 
 interface SchoolDetailsProps {
   data: {
@@ -85,15 +86,3 @@ export default function SchoolDetails({ data, setters, onPickImage }: SchoolDeta
   );
 }
 
-const styles = StyleSheet.create({
-  container: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 20, elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
-  sectionLabel: { fontSize: 14, fontWeight: 'bold', color: '#007bff', marginBottom: 10 },
-  input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#eee', marginBottom: 10 },
-  dateInput: { justifyContent: 'center' },
-  dateText: { color: '#222' },
-  placeholderText: { color: '#999' },
-  row: { flexDirection: 'row' },
-  logoBtn: { backgroundColor: '#f0f0f0', padding: 10, borderRadius: 8, alignItems: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: '#ccc' },
-  logoBtnText: { color: '#666', fontSize: 13 },
-  preview: { width: 50, height: 50, alignSelf: 'center', marginTop: 10, borderRadius: 5 }
-});

@@ -2,14 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-export const LiquidMathRenderer = React.memo(({ content }: { content: string }) => {
+const LiquidMathRendererComponent = ({ content }: { content: string }) => {
   const [height, setHeight] = useState(60);
-
-  if (!content) return null;
 
   const displayContent = useMemo(() => {
     return String(content).replace(/\$(.*?)\$/g, '\\($1\\)');
   }, [content]);
+
+  if (!content) return null;
 
   const html = `
     <!DOCTYPE html>
@@ -55,4 +55,7 @@ export const LiquidMathRenderer = React.memo(({ content }: { content: string }) 
       />
     </View>
   );
-});
+};
+
+export const LiquidMathRenderer = React.memo(LiquidMathRendererComponent);
+LiquidMathRenderer.displayName = 'LiquidMathRenderer';

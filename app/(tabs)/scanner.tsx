@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Context & Style Imports
 import { useExam } from '../../services/examContext';
 import { extractAllQuestionsFromImage } from '../../services/scannerService';
 import { componentStyles as compStyles } from '../../styles/componentStyles';
+import { scannerStyles as localStyles } from '../../styles/featureStyles';
 import { screenStyles as styles } from '../../styles/screenStyles';
-import { COLORS, RADIUS } from '../../styles/theme';
+import { COLORS } from '../../styles/theme';
 
-interface ScannableDoc extends DocumentPicker.DocumentPickerAsset {
+interface ScannableDoc extends DocumentPickerAsset {
   mode?: 'question' | 'notes';
 }
 
@@ -263,95 +265,3 @@ export default function ScannerTab() {
   );
 }
 
-const localStyles = StyleSheet.create({
-  sectionHeaderLabel: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    marginTop: 10,
-    marginLeft: 4,
-  },
-  notesUploadBtn: {
-    backgroundColor: '#6c5ce7',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: RADIUS.md,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  badge: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  badgeQuestion: {
-    color: '#007bff',
-  },
-  badgeNotes: {
-    color: '#6c5ce7',
-  },
-  settingsLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 6,
-  },
-  difficultyRow: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    padding: 3,
-    marginBottom: 12,
-  },
-  difficultyBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  difficultyBtnActive: {
-    backgroundColor: '#6c5ce7',
-  },
-  difficultyTextActive: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  difficultyTextInactive: {
-    color: '#666',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  quantityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  quantityInput: {
-    backgroundColor: '#f9f9f9',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-    width: 60,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  notesDivider: {
-    height: 1,
-    backgroundColor: '#eee',
-    marginBottom: 14,
-    marginTop: 2,
-  },
-});

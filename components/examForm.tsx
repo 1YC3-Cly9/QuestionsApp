@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { examFormStyles as styles } from '../styles/appStyles';
 
 interface ExamFormProps {
   data: {
@@ -82,19 +82,3 @@ export default function examForm({ data, setters, onGenerate, isLoading }: ExamF
   );
 }
 
-const styles = StyleSheet.create({
-  container: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 20 },
-  label: { fontSize: 12, fontWeight: 'bold', color: '#666', marginBottom: 5 },
-  toggleRow: { flexDirection: 'row', backgroundColor: '#f0f0f0', borderRadius: 8, padding: 4, marginBottom: 15 },
-  typeBtn: { flex: 1, padding: 10, alignItems: 'center', borderRadius: 6 },
-  activeBtn: { backgroundColor: '#007bff' },
-  btnText: { color: '#666', fontWeight: '600' },
-  activeText: { color: '#fff', fontWeight: 'bold' },
-  input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#eee', marginBottom: 10 },
-  row: { flexDirection: 'row' },
-  difficultyRow: { flexDirection: 'row', backgroundColor: '#f0f0f0', borderRadius: 8, padding: 3, marginBottom: 10 },
-  difficultyBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 6 },
-  difficultyBtnActive: { backgroundColor: '#007bff' },
-  genBtn: { backgroundColor: '#007bff', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-  genBtnText: { color: '#fff', fontWeight: 'bold' }
-});

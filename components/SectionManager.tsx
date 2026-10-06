@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { ExamSection } from '../services/examContext';
+import { sectionManagerStyles as styles } from '../styles/sectionStyles';
 import SectionItem from './SectionItem';
 
 interface SectionManagerProps {
@@ -79,12 +80,3 @@ export default function SectionManager({ sections, setSections, questionCount }:
   );
 }
 
-const styles = StyleSheet.create({
-  container: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 20, elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
-  menuButton: { paddingVertical: 2 },
-  sectionLabel: { fontSize: 14, fontWeight: 'bold', color: '#007bff' },
-  headingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  summaryText: { color: '#636e72', fontSize: 12, marginTop: 3 },
-  addRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 12, marginTop: 12 },
-  manageText: { color: '#636e72', fontSize: 13 },
-});
